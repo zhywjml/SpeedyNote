@@ -180,7 +180,7 @@ void NotebookCardDelegate::paintNotebookCard(QPainter* painter, const QRect& rec
 
     // === Tags display (Step 1: Tag feature) ===
     int tagsY = typeY + 14;
-    QStringList tags = index.data(TagsRole).toStringList();
+    const QStringList tags = index.data(TagsRole).value<QStringList>();
     if (!tags.isEmpty()) {
         // Draw up to 3 tag dots
         const int maxVisibleTags = 3;

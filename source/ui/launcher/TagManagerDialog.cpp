@@ -366,8 +366,9 @@ void TagManagerDialog::saveTagsToNotebook(const QStringList& tags)
 {
     QString docPath = m_bundlePath + "/document.json";
     QFile file(docPath);
-    if (!file.open(QIODevice::ReadWrite)) {
+    if (!file.open(QIODevice::ReadOnly)) {
         qWarning() << "TagManagerDialog: Cannot open" << docPath;
+        QMessageBox::warning(this, tr("Error"), tr("Failed to open notebook file"));
         return;
     }
 
@@ -377,6 +378,7 @@ void TagManagerDialog::saveTagsToNotebook(const QStringList& tags)
 
     if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
         qWarning() << "TagManagerDialog: JSON parse error";
+        QMessageBox::warning(this, tr("Error"), tr("Failed to parse notebook data"));
         return;
     }
 
@@ -387,11 +389,19 @@ void TagManagerDialog::saveTagsToNotebook(const QStringList& tags)
         obj["tags"] = QJsonArray::fromStringList(tags);
     }
 
+    // Re-open file for writing
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qWarning() << "TagManagerDialog: Cannot write to" << docPath;
+        QMessageBox::warning(this, tr("Error"), tr("Failed to save tags"));
         return;
     }
-    file.write(doc.toJson(QJsonDocument::Indented));
+
+    if (file.write(doc.toJson(QJsonDocument::Indented)) == -1) {
+        qWarning() << "TagManagerDialog: Write failed to" << docPath;
+        file.close();
+        QMessageBox::warning(this, tr("Error"), tr("Failed to save tags"));
+        return;
+    }
     file.close();
 
     // Reload notebook library to pick up changes
