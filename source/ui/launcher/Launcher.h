@@ -182,6 +182,7 @@ private:
     
     // Navigation sidebar
     QWidget* m_navSidebar = nullptr;
+    LauncherNavButton* m_homeBtn = nullptr;
     LauncherNavButton* m_returnBtn = nullptr;
     LauncherNavButton* m_timelineBtn = nullptr;
     LauncherNavButton* m_starredBtn = nullptr;

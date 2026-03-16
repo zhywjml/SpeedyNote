@@ -289,7 +289,21 @@ void Launcher::setupNavigation()
     auto* navLayout = new QVBoxLayout(m_navSidebar);
     navLayout->setContentsMargins(8, 8, 8, 8);
     navLayout->setSpacing(8);
-    
+
+    // Home button - opens the formal home page for folders and notebooks
+    m_homeBtn = new LauncherNavButton(m_navSidebar);
+    m_homeBtn->setIconName("star");  // Star icon represents home/organized content
+    m_homeBtn->setText(tr("Home"));
+    m_homeBtn->setCheckable(true);
+    navLayout->addWidget(m_homeBtn);
+
+    // Separator
+    auto* topSeparator = new QFrame(m_navSidebar);
+    topSeparator->setFrameShape(QFrame::HLine);
+    topSeparator->setObjectName("LauncherNavSeparator");
+    topSeparator->setFixedHeight(1);
+    navLayout->addWidget(topSeparator);
+
     // Return button (only visible if MainWindow exists)
     m_returnBtn = new LauncherNavButton(m_navSidebar);
     m_returnBtn->setIconName("left_arrow");  // TODO: Replace with actual icon name
@@ -362,7 +376,12 @@ void Launcher::setupNavigation()
         }
         hideWithAnimation();
     });
-    
+
+    // Home button - switch to Starred view (the home for folders and notebooks)
+    connect(m_homeBtn, &LauncherNavButton::clicked, this, [this]() {
+        switchToView(View::Starred);
+    });
+
     connect(m_timelineBtn, &LauncherNavButton::clicked, this, [this]() {
         switchToView(View::Timeline);
     });
@@ -662,6 +681,7 @@ void Launcher::switchToView(View view)
 void Launcher::updateNavigationState()
 {
     // Update button checked states
+    m_homeBtn->setChecked(m_currentView == View::Starred);
     m_timelineBtn->setChecked(m_currentView == View::Timeline);
     m_starredBtn->setChecked(m_currentView == View::Starred);
     m_searchBtn->setChecked(m_currentView == View::Search);
@@ -669,6 +689,7 @@ void Launcher::updateNavigationState()
 
 void Launcher::setNavigationCompact(bool compact)
 {
+    m_homeBtn->setCompact(compact);
     m_returnBtn->setCompact(compact);
     m_timelineBtn->setCompact(compact);
     m_starredBtn->setCompact(compact);
