@@ -65,7 +65,7 @@ ControlPanelDialog::ControlPanelDialog(MainWindow *mainWindow, QWidget *parent)
     : QDialog(parent), mainWindowRef(mainWindow) {
 
     setWindowTitle(tr("Settings"));
-    resize(450, 400);
+    resize(600, 550);
 
     tabWidget = new QTabWidget(this);
 

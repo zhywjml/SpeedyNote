@@ -17,7 +17,7 @@ QPushButton#ToolButton {
     max-width: 36px;
     max-height: 36px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     background: transparent;
     padding: 0px;
 }
