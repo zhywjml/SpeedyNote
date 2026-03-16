@@ -1018,7 +1018,17 @@ public:
      * saves to assets folder, and selects the new object.
      */
     void insertImageFromFile(const QString& filePath);
-    
+
+    /**
+     * @brief Insert image at specified document position (T005).
+     *
+     * Opens a file dialog to select an image, then inserts it at the
+     * clicked position instead of viewport center.
+     *
+     * @param position Document coordinate where image should be placed
+     */
+    void insertImageAtPosition(const QPointF& position);
+
     /**
      * @brief Open file dialog and insert selected image.
      * 

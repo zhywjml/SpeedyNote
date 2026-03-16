@@ -323,11 +323,22 @@ private:
     
     /**
      * @brief Clean up old thumbnails if cache exceeds size limit.
-     * 
+     *
      * Uses LRU eviction based on file modification time.
      */
     void cleanupThumbnailCache();
-    
+
+    /**
+     * @brief Get the total size of the thumbnail cache in bytes (T009).
+     * @return Cache size in bytes
+     */
+    qint64 getThumbnailCacheSize() const;
+
+    /**
+     * @brief Clear all thumbnails from the cache (T010).
+     */
+    void clearThumbnailCache();
+
     static NotebookLibrary* s_instance;
 };
 

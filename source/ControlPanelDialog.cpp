@@ -1,7 +1,27 @@
+// ============================================================================
+// ControlPanelDialog - Application Settings Dialog
+// ============================================================================
+//
+// The main settings/preferences dialog for SpeedyNote. Provides configuration
+// for:
+// - Background settings (grid, color, templates)
+// - Keyboard shortcuts customization
+// - Game controller button mapping (when enabled)
+//
+// Architecture:
+// - Tab-based interface using QTabWidget
+// - Each tab is created by a separate create*Tab() method
+// - Settings persist via QSettings (platform-native storage)
+// - Changes apply immediately or on dialog acceptance
+//
+// Note: Previously contained dial/wheel settings (removed in MW7.2)
+// ============================================================================
+
 #include "ControlPanelDialog.h"
 #include "MainWindow.h"
 #include "core/Page.h"
 #include "core/ShortcutManager.h"
+#include "core/NotebookLibrary.h"  // T009/T010: Cache management
 
 #ifdef SPEEDYNOTE_CONTROLLER_SUPPORT
 #include "ButtonMappingTypes.h"
@@ -202,7 +222,10 @@ void ControlPanelDialog::loadSettings()
     // Load PDF dark mode setting (defaults to true)
     pdfDarkModeCheckbox->setChecked(settings.value("display/pdfDarkMode", true).toBool());
     skipImageMaskingCheckbox->setChecked(settings.value("display/skipImageMasking", false).toBool());
-    
+
+    // T004: Load scroll speed setting
+    scrollSpeedSpin->setValue(settings.value("scroll/speed", 40).toInt());
+
     // Load language settings
     bool useSystemLang = settings.value("useSystemLanguage", true).toBool();
     QString overrideLang = settings.value("languageOverride", "en").toString();
@@ -262,7 +285,10 @@ void ControlPanelDialog::applyChanges()
     bool skipMasking = skipImageMaskingCheckbox->isChecked();
     settings.setValue("display/skipImageMasking", skipMasking);
     mainWindowRef->setSkipImageMasking(skipMasking);
-    
+
+    // T004: Save scroll speed setting
+    settings.setValue("scroll/speed", scrollSpeedSpin->value());
+
     // Apply language settings
     settings.setValue("useSystemLanguage", useSystemLanguageCheckbox->isChecked());
     if (!useSystemLanguageCheckbox->isChecked()) {
@@ -1349,6 +1375,22 @@ void ControlPanelDialog::createThemeTab() {
     connect(pdfDarkModeCheckbox, &QCheckBox::toggled, this, updateSkipEnabled);
     updateSkipEnabled();
 
+    layout->addSpacing(10);
+
+    // T004: Scroll speed setting
+    QLabel *scrollSpeedLabel = new QLabel(tr("Scroll Speed:"), themeTab);
+    layout->addWidget(scrollSpeedLabel);
+
+    scrollSpeedSpin = new QSpinBox(themeTab);
+    scrollSpeedSpin->setRange(10, 100);
+    scrollSpeedSpin->setSingleStep(5);
+    scrollSpeedSpin->setToolTip(tr("Mouse wheel scroll speed (10-100, default: 40)"));
+    layout->addWidget(scrollSpeedSpin);
+
+    QLabel *scrollSpeedNote = new QLabel(tr("Higher values = faster scrolling"), themeTab);
+    scrollSpeedNote->setStyleSheet("color: gray; font-size: 10px;");
+    layout->addWidget(scrollSpeedNote);
+
     layout->addStretch();
     
     tabWidget->addTab(themeTab, tr("Theme"));
@@ -1677,9 +1719,8 @@ void ControlPanelDialog::createCacheTab() {
 
     layout->addSpacing(20);
 
-    // Show cache size
-    // Phase P.1: SpnPackageManager removed - cache management will be reimplemented in NotebookLibrary
-    qint64 cacheSize = 0;  // TODO: Implement with NotebookLibrary::getTempDirsTotalSize()
+    // T009: Show cache size from NotebookLibrary
+    qint64 cacheSize = NotebookLibrary::instance()->getThumbnailCacheSize();
     QString cacheSizeText = QString::number(cacheSize / 1024.0 / 1024.0, 'f', 2) + " MB";
     QLabel *cacheSizeLabel = new QLabel(tr("Current cache size: %1").arg(cacheSizeText), cacheTab);
     cacheSizeLabel->setAlignment(Qt::AlignCenter);
@@ -1688,9 +1729,8 @@ void ControlPanelDialog::createCacheTab() {
 
     layout->addSpacing(5);
 
-    // Location info
-    QString tempPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    QLabel *locationLabel = new QLabel(tr("Location: %1").arg(tempPath), cacheTab);
+    // Location info - show cache location
+    QLabel *locationLabel = new QLabel(tr("Location: Thumbnail cache folder"), cacheTab);
     locationLabel->setAlignment(Qt::AlignCenter);
     locationLabel->setStyleSheet("font-size: 9px; color: #95a5a6; font-style: italic;");
     locationLabel->setWordWrap(true);
@@ -1698,35 +1738,34 @@ void ControlPanelDialog::createCacheTab() {
 
     layout->addSpacing(30);
 
-    // Clear cache button
+    // T010: Clear cache button
     QPushButton *clearCacheButton = new QPushButton(tr("Clear Cache Now"), cacheTab);
     clearCacheButton->setFixedSize(180, 40);
     clearCacheButton->setStyleSheet("font-size: 13px; font-weight: bold; padding: 8px;");
 
     connect(clearCacheButton, &QPushButton::clicked, [this, cacheSizeLabel]() {
-        // ✅ DISK CLEANUP: Warn user to close notebooks first
+        // DISK CLEANUP: Warn user to close notebooks first
         QMessageBox::StandardButton reply = QMessageBox::question(
             this,
             tr("Clear Cache?"),
-            tr("This will delete all temporary cache files.\n\n"
-               "⚠️ WARNING: Make sure all notebooks are closed before clearing cache, "
-               "otherwise you may lose unsaved changes!\n\n"
+            tr("This will delete all cached thumbnails.\n\n"
+               "⚠️ WARNING: Thumbnails will be regenerated when you open notebooks.\n\n"
                "Continue?"),
             QMessageBox::Yes | QMessageBox::No
         );
 
         if (reply == QMessageBox::Yes) {
-            // Phase P.1: SpnPackageManager removed - cache cleanup will be reimplemented
-            // TODO: Implement with NotebookLibrary::cleanupOrphanedTempDirs()
-            
-            // Update cache size display (currently disabled)
-            qint64 newCacheSize = 0;  // TODO: Implement with NotebookLibrary
+            // T010: Clear the thumbnail cache
+            NotebookLibrary::instance()->clearThumbnailCache();
+
+            // Update cache size display
+            qint64 newCacheSize = NotebookLibrary::instance()->getThumbnailCacheSize();
             QString newCacheSizeText = QString::number(newCacheSize / 1024.0 / 1024.0, 'f', 2) + " MB";
             cacheSizeLabel->setText(tr("Current cache size: %1").arg(newCacheSizeText));
 
             // Show feedback message
-            QMessageBox::information(this, tr("Cache Cleared"), 
-                tr("Cache cleanup is temporarily disabled during architecture migration."));
+            QMessageBox::information(this, tr("Cache Cleared"),
+                tr("Thumbnail cache has been cleared."));
         }
     });
 

@@ -1,3 +1,25 @@
+// ============================================================================
+// DocumentConverter - PowerPoint/ODP to PDF Conversion
+// ============================================================================
+//
+// This module provides document format conversion functionality using LibreOffice
+// as a backend. It converts PowerPoint (.ppt, .pptx) and OpenDocument Presentation
+// (.odp) files to PDF format for import into SpeedyNote.
+//
+// Architecture:
+// - DocumentConverter: Main converter class that handles conversion workflow
+// - Uses LibreOffice in headless mode for format conversion
+// - Supports Windows, Linux, and macOS platforms
+// - Provides platform-specific installation instructions
+//
+// Dependencies:
+// - LibreOffice must be installed on the system
+// - QProcess for spawning LibreOffice subprocess
+//
+// Note: This converter is primarily used for importing presentations into
+// SpeedyNote as PDF-based notebooks.
+// ============================================================================
+
 #include "DocumentConverter.h"
 #include <QFileInfo>
 #include <QDir>
@@ -5,6 +27,10 @@
 #include <QDebug>
 #include <QThread>
 #include <QCoreApplication>
+
+// ============================================================================
+// Constructor / Destructor
+// ============================================================================
 
 DocumentConverter::DocumentConverter(QObject *parent)
     : QObject(parent), conversionProcess(nullptr)
@@ -20,6 +46,14 @@ DocumentConverter::~DocumentConverter()
     }
 }
 
+// ============================================================================
+// LibreOffice Detection (Static Methods)
+// ============================================================================
+
+/**
+ * @brief Check if LibreOffice is available on the system.
+ * @return true if LibreOffice installation is detected, false otherwise.
+ */
 bool DocumentConverter::isLibreOfficeAvailable()
 {
     QString path = getLibreOfficePath();
@@ -104,6 +138,14 @@ QString DocumentConverter::getLibreOfficePath()
     return QString(); // Not found
 }
 
+// ============================================================================
+// Platform-Specific Installation Instructions
+// ============================================================================
+
+/**
+ * @brief Get platform-specific installation instructions for LibreOffice.
+ * @return Localized string with download/install instructions based on OS.
+ */
 QString DocumentConverter::getInstallationInstructions()
 {
 #ifdef Q_OS_WIN
@@ -139,6 +181,18 @@ QString DocumentConverter::getInstallationInstructions()
 #endif
 }
 
+// ============================================================================
+// Conversion Eligibility Check
+// ============================================================================
+
+/**
+ * @brief Check if a file requires conversion to PDF.
+ * @param filePath Path to the file to check.
+ * @return true if the file is a PowerPoint or ODP presentation, false otherwise.
+ *
+ * This method checks file extensions to determine if the file needs
+ * conversion via LibreOffice before it can be imported into SpeedyNote.
+ */
 bool DocumentConverter::needsConversion(const QString &filePath)
 {
     if (filePath.isEmpty()) {
@@ -151,6 +205,25 @@ bool DocumentConverter::needsConversion(const QString &filePath)
            lowerPath.endsWith(".odp");  // Also support OpenDocument Presentation
 }
 
+// ============================================================================
+// Main Conversion Methods
+// ============================================================================
+
+/**
+ * @brief Convert a presentation file to PDF format.
+ * @param inputPath Path to the input presentation file (.ppt, .pptx, or .odp).
+ * @param status Output parameter that receives the conversion status code.
+ * @param outputPath Optional output path. If empty, saves next to original file.
+ * @param dpi Resolution for PDF rendering (default 96). Higher values = better quality but larger files.
+ * @return Path to the converted PDF on success, empty string on failure.
+ *
+ * This is the main public API for document conversion. It performs:
+ * 1. Input validation
+ * 2. LibreOffice availability check
+ * 3. Output path resolution
+ * 4. Delegates to convertToPdfInternal() for the actual conversion
+ * 5. Output file verification
+ */
 QString DocumentConverter::convertToPdf(const QString &inputPath, ConversionStatus &status, 
                                        const QString &outputPath, int dpi)
 {
@@ -267,6 +340,24 @@ QString DocumentConverter::convertToPdf(const QString &inputPath, ConversionStat
     return finalOutputPath;
 }
 
+// ============================================================================
+// Internal Conversion Implementation
+// ============================================================================
+
+/**
+ * @brief Internal method that performs the actual LibreOffice conversion.
+ * @param inputPath Path to the input presentation file.
+ * @param outputDir Directory where the output PDF should be created.
+ * @param dpi Target DPI for image quality in the output PDF.
+ * @return Path to the created PDF on success, empty string on failure.
+ *
+ * This method:
+ * 1. Spawns LibreOffice in headless mode
+ * 2. Passes conversion arguments (--convert-to pdf)
+ * 3. Waits for completion with 120-second timeout
+ * 4. Checks exit code for success/failure
+ * 5. Returns the path to the generated PDF
+ */
 QString DocumentConverter::convertToPdfInternal(const QString &inputPath, const QString &outputDir, int dpi)
 {
     QString libreOfficePath = getLibreOfficePath();

@@ -1,3 +1,29 @@
+// ============================================================================
+// ActionBar - Contextual Action Toolbar
+// ============================================================================
+//
+// A vertical toolbar that appears on the right side of the screen when
+// performing context-sensitive operations (e.g., object selection, lasso,
+// text selection). It provides quick access to relevant actions.
+//
+// Visual Design:
+// - Fixed width: 64px (ACTIONBAR_WIDTH)
+// - Positioned on right edge of viewport
+// - Semi-transparent with drop shadow
+// - Supports dark/light mode via dynamic styling
+//
+// Architecture:
+// - ActionBar: Base widget container for action buttons
+// - Specialized versions: ObjectSelectActionBar, LassoActionBar,
+//   TextSelectionActionBar, ClipboardActionBar, PagePanelActionBar
+// - Buttons added via addButton() with automatic layout
+// - Separators can be added with addSeparator()
+//
+// Interaction:
+// - Visibility controlled by MainWindow based on current tool/state
+// - Dark mode automatically detected via palette luminance
+// ============================================================================
+
 #include "ActionBar.h"
 
 #include <QFrame>

@@ -97,6 +97,8 @@ private:
     QColor selectedAccentColor;
     QCheckBox *pdfDarkModeCheckbox;
     QCheckBox *skipImageMaskingCheckbox;
+    QSpinBox *scrollSpeedSpin;  // T004: Scroll speed setting
+
     void createThemeTab();
 
     // === Language tab ===

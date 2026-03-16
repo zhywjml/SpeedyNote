@@ -1,3 +1,36 @@
+// ============================================================================
+// Toolbar - Main Drawing Tools Bar
+// ============================================================================
+//
+// The primary horizontal toolbar located at the top of the main window.
+// Provides access to all drawing and editing tools with expandable sub-toolbars.
+//
+// Tools Provided:
+// - Pen: Drawing tool with customizable color, thickness, and pressure sensitivity
+// - Marker: Semi-transparent highlighter effect
+// - Eraser: Stroke and object eraser
+// - Highlighter: Text/region highlighter tool
+// - Object Select: Selection and manipulation of inserted objects
+// - Lasso: Freeform selection tool for stroke regions
+// - Pan: Temporary hand tool for viewport navigation
+//
+// Architecture:
+// - Toolbar: Main container widget (44px height)
+// - ExpandableToolButton: Collapsible button that shows/hides sub-toolbar
+// - SubToolbar: Specialized configuration panels for each tool
+//   - PenSubToolbar: Pen settings (color, size, pressure curve)
+//   - MarkerSubToolbar: Marker settings
+//   - EraserSubToolbar: Eraser mode and size
+//   - HighlighterSubToolbar: Highlighter settings
+//   - ObjectSelectSubToolbar: Selection options
+//
+// Keyboard Shortcuts:
+// - Pen: B, Marker: M, Eraser: E, Highlighter: T
+// - Object Select: V, Lasso: L, Pan: H (hold)
+//
+// Note: The toolbar automatically adjusts to dark/light theme
+// ============================================================================
+
 #include "Toolbar.h"
 #include "widgets/ExpandableToolButton.h"
 #include "subtoolbars/PenSubToolbar.h"

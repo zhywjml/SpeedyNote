@@ -1,3 +1,26 @@
+// ============================================================================
+// NotebookLibrary - Notebook Metadata and Library Management
+// ============================================================================
+//
+// This module manages the notebook library, which tracks:
+// - Recently opened notebooks
+// - Starred/favorite notebooks
+// - Starred folder organization
+// - Notebook thumbnails for the launcher UI
+//
+// Architecture:
+// - Singleton pattern (instance()) for global access
+// - JSON-based persistence (notebook_library.json)
+// - Debounced auto-save to reduce disk I/O
+// - Thumbnail cache with automatic cleanup
+//
+// Data Flow:
+// 1. Load: Read JSON on startup, populate m_notebooks list
+// 2. Track: AddToRecent() called when notebooks are opened
+// 3. Star: Users can star notebooks and organize into folders
+// 4. Save: Changes trigger debounced save (500ms delay)
+// ============================================================================
+
 #include "NotebookLibrary.h"
 
 #include <QStandardPaths>
@@ -587,13 +610,48 @@ void NotebookLibrary::cleanupThumbnailCache()
         if (totalSize <= MAX_CACHE_SIZE_BYTES) {
             break;
         }
-        
+
         qint64 fileSize = fileInfo.size();
         if (QFile::remove(fileInfo.absoluteFilePath())) {
             totalSize -= fileSize;
             // CR-P.2: Removed qDebug for production code
         }
     }
+}
+
+// ============================================================================
+// T009/T010: Cache size and cleanup
+// ============================================================================
+qint64 NotebookLibrary::getThumbnailCacheSize() const
+{
+    QDir cacheDir(m_thumbnailCachePath);
+    if (!cacheDir.exists()) {
+        return 0;
+    }
+
+    qint64 totalSize = 0;
+    QFileInfoList files = cacheDir.entryInfoList(QDir::Files);
+    for (const auto& fileInfo : files) {
+        totalSize += fileInfo.size();
+    }
+    return totalSize;
+}
+
+void NotebookLibrary::clearThumbnailCache()
+{
+    QDir cacheDir(m_thumbnailCachePath);
+    if (!cacheDir.exists()) {
+        return;
+    }
+
+    QFileInfoList files = cacheDir.entryInfoList(QDir::Files);
+    for (const auto& fileInfo : files) {
+        QFile::remove(fileInfo.absoluteFilePath());
+    }
+
+#ifdef SPEEDYNOTE_DEBUG
+    qDebug() << "NotebookLibrary: Cleared thumbnail cache";
+#endif
 }
 
 // === Persistence ===

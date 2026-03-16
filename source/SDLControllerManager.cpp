@@ -1,3 +1,25 @@
+// ============================================================================
+// SDLControllerManager - Game Controller Input Handler
+// ============================================================================
+//
+// Handles game controller/gamepad input using SDL2 library.
+// Supports button mapping, axis polling, and button press detection.
+//
+// Features:
+// - SDL2-based joystick/gamepad input
+// - Configurable button mappings (loaded from settings)
+// - Left stick angle detection for dial/wheel input
+// - Button event emission for application actions
+//
+// Architecture:
+// - Singleton pattern (instance())
+// - QTimer-based polling at 60Hz for continuous input
+// - Deadzone handling to filter noise
+// - Mappings stored via QSettings
+//
+// Note: Only available when SPEEDYNOTE_CONTROLLER_SUPPORT is defined
+// ============================================================================
+
 #include "SDLControllerManager.h"
 
 #ifdef SPEEDYNOTE_CONTROLLER_SUPPORT

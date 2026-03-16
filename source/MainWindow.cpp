@@ -1,3 +1,77 @@
+// ============================================================================
+// MainWindow - Main Application Window Implementation
+// ============================================================================
+// Part of the SpeedyNote document architecture
+//
+// ============================================================================
+// FUNCTIONAL MODULES INDEX (for maintenance and navigation)
+// ============================================================================
+// This file contains the main application window, managing:
+//
+// CORE SETUP:
+//   - setupUi() (line 574)
+//   - setupManagedShortcuts() (line 1263)
+//   - onShortcutChanged() (line 1746)
+//
+// VIEWPORT MANAGEMENT:
+//   - connectViewportScrollSignals() (line 1838)
+//   - updatePanX/Y() (line 1822/1830)
+//   - centerViewportContent() (line 2466)
+//   - updateLayerPanelForViewport() (line 2511)
+//
+// DOCUMENT OPERATIONS:
+//   - saveDocument() (line 2993)
+//   - loadDocument() (line 3096)
+//   - addPageToDocument() (line 3193)
+//   - insertPageInDocument() (line 3244)
+//   - deletePageInDocument() (line 3302)
+//   - openPdfDocument() (line 3387)
+//
+// TAB MANAGEMENT:
+//   - addNewTab() (line 3483)
+//   - addNewEdgelessTab() (line 3553)
+//   - loadFolderDocument() (line 3615)
+//   - removeTabAt() (line 3670)
+//   - switchToTabIndex() (line 3693)
+//
+// NAVIGATION:
+//   - switchPage() (line 1813)
+//   - toggleFullscreen() (line 3700)
+//   - showJumpToPageDialog() (line 3712)
+//   - goToPreviousPage() / goToNextPage() (line 3733/3740)
+//
+// THEME & SETTINGS:
+//   - updateApplicationPalette() (line 3835)
+//   - setPdfDarkModeEnabled() (line 3948)
+//   - setSkipImageMasking() (line 3958)
+//   - applyBackgroundSettings() (line 4009)
+//   - updateTheme() (line 4074)
+//   - loadThemeSettings() / saveThemeSettings() (line 4139/4131)
+//
+// TOUCH & INPUT:
+//   - setTouchGestureMode() (line 4158)
+//   - cycleTouchGestureMode() (line 4200)
+//   - onStylusProximityEnter/Leave() (line 4267/4284)
+//   - wheelEvent() (line 4293)
+//
+// UI UPDATES:
+//   - forceUIRefresh() (line 3472)
+//   - updateOutlinePanelForDocument() (line 2769)
+//   - updatePagePanelForViewport() (line 2809)
+//   - notifyPageStructureChanged() (line 2855)
+//
+// DIALOGS:
+//   - showPdfRelinkDialog() (line 2569)
+//   - showPdfExportDialog() (line 2616)
+//
+// TOOLBAR & SUBTOOLBARS:
+//   - updateLinkSlotButtons() (line 2355)
+//   - applySubToolbarValuesToViewport() (line 2403)
+//   - applyAllSubToolbarValuesToViewport() (line 2431)
+//
+// Total: ~7,100 lines, 150+ methods
+// ============================================================================
+
 #include "MainWindow.h"
 
 #include "core/DocumentViewport.h"  // Phase 3.1: New viewport architecture
@@ -1281,9 +1355,9 @@ void MainWindow::setupManagedShortcuts()
     createShortcut("file.new_edgeless", [this]() { addNewEdgelessTab(); });
     createShortcut("file.open_pdf", [this]() { openPdfDocument(); });
     createShortcut("file.open_notebook", [this]() { loadFolderDocument(); });
-    // file.close_tab - TODO: implement closeCurrentTab()
-    // file.export - TODO: implement export action
-    
+    // file.close_tab implemented at line 1591
+    // file.export implemented at line 1462
+
     // ===== Document/Page Operations =====
     createShortcut("document.add_page", [this]() { addPageToDocument(); });
     createShortcut("document.insert_page", [this]() { insertPageInDocument(); });
@@ -3327,7 +3401,20 @@ void MainWindow::deletePageInDocument()
 #endif
         return;
                 }
-    
+
+    // T006: Show confirmation dialog before deleting
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        tr("Delete Page?"),
+        tr("Are you sure you want to delete this page?\n\n"
+           "This action cannot be undone."),
+        QMessageBox::Yes | QMessageBox::No
+    );
+
+    if (reply != QMessageBox::Yes) {
+        return;  // User cancelled
+    }
+
     // Guard 1: Cannot delete the last page
     if (doc->pageCount() <= 1) {
         QMessageBox::information(this, tr("Cannot Delete"),

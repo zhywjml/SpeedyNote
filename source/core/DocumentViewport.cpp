@@ -2,6 +2,78 @@
 // DocumentViewport - Implementation
 // ============================================================================
 // Part of the new SpeedyNote document architecture (Phase 1.3.1)
+//
+// ============================================================================
+// FUNCTIONAL MODULES INDEX (for maintenance and navigation)
+// ============================================================================
+// This file contains 30+ functional modules. Use this index to navigate:
+//
+// CORE:
+//   - Constants (line 79)
+//   - Thread-Local PDF Provider Cache (line 88)
+//   - Constructor & Destructor (line 120)
+//   - Document Management (line 282)
+//
+// UI COMPONENTS:
+//   - Missing PDF Banner (line 409)
+//   - Theme / Dark Mode (line 443)
+//   - Layout (line 498)
+//
+// STATE MANAGEMENT:
+//   - Document Change Notifications (line 661)
+//   - Tool State Management (line 681)
+//   - Marker Tool (line 774)
+//   - Straight Line Mode (line 795)
+//   - Object Mode Setters (line 820)
+//   - View State Setters (line 848)
+//
+// NAVIGATION:
+//   - Layout Engine (line 1428)
+//   - Object Resize (line 1679)
+//   - Position History (line 1070)
+//   - Navigation/Zoom/Pan (line 1228)
+//
+// EVENT HANDLING:
+//   - Qt Event Overrides (line 2121) - paint, resize, mouse, wheel, key, tablet
+//   - Coordinate Transforms (line 2926)
+//   - Pan & Zoom Helpers (line 3022)
+//   - Gesture Handling (line 3066, 3318) - zoom, pan, touch
+//
+// CACHING & PERFORMANCE:
+//   - PDF Cache Helpers (line 3453)
+//   - Page Layout Cache (line 3821)
+//   - Stroke Cache Helpers (line 3907)
+//
+// INPUT & DRAWING:
+//   - Input Routing (line 4088)
+//   - Stroke Drawing (line 4443)
+//   - Lasso Selection Tool (line 4979)
+//   - Object Select Mode (line 5215)
+//
+// OBJECT OPERATIONS:
+//   - LinkObject Creation (line 6661)
+//   - Link Slot Activation (line 6825)
+//   - Object Z-Order (line 7153)
+//   - Object Transform (line 7943)
+//   - Object Resize (line 1679)
+//
+// EDITING:
+//   - Clipboard Operations (line 9249)
+//   - Text/Highlighter (line 9497)
+//   - Undo/Redo System (line 10811)
+//
+// PDF FEATURES:
+//   - PDF Search (line 10106)
+//   - PDF Links (line 9551)
+//
+// RENDERING:
+//   - Rendering Helpers (line 11586)
+//   - Edgeless Mode Rendering (line 11732)
+//
+// PRIVATE:
+//   - Private Methods (line 12142)
+//
+// Total: ~12,300 lines, 200+ methods
 // ============================================================================
 
 #include "DocumentViewport.h"
@@ -75,6 +147,8 @@ static void initEraserJni()
 #include <QUrl>              // For URL handling (Phase C.4.3)
 #include <QMenu>             // For addLinkToSlot menu (Phase C.5.3 - temporary)
 #include <QInputDialog>      // For URL input dialog (Phase C.5.3 - temporary)
+#include <QSettings>         // For user preferences (scroll speed)
+#include <QMessageBox>       // For note missing notification (T007)
 
 // ===== Constants =====
 
@@ -2605,8 +2679,9 @@ void DocumentViewport::wheelEvent(QWheelEvent* event)
     } else if (!angleDelta.isNull()) {
         // Mouse wheel: convert degrees to scroll distance
         // 120 units = one step, scroll by ~40 document units per step
-        // CUSTOMIZABLE: Scroll speed (user preference, range: 10-100)
-        qreal scrollSpeed = 40.0;  // TODO: Load from user settings
+        // Load scroll speed from user settings (range: 10-100, default: 40)
+        QSettings settings("SpeedyNote", "App");
+        qreal scrollSpeed = settings.value("scroll/speed", 40.0).toReal();
         scrollDelta.setX(-angleDelta.x() / 120.0 * scrollSpeed);
         scrollDelta.setY(-angleDelta.y() / 120.0 * scrollSpeed);
     }
@@ -5236,10 +5311,9 @@ void DocumentViewport::handlePointerPress_ObjectSelect(const PointerEvent& pe)
         }
         
         if (m_objectInsertMode == ObjectInsertMode::Image) {
-            // Open file dialog and insert image
-            // Note: insertImageFromDialog() positions at viewport center for now
-            // TODO: Create insertImageAtPosition() for click-to-place
-            insertImageFromDialog();
+            // T005: Insert image at clicked position instead of viewport center
+            QPointF docPos = viewportToDocument(pe.viewportPos);
+            insertImageAtPosition(docPos);
         } else {
             // Create empty LinkObject at position
             // Pass viewportPos so edgeless mode can determine correct tile
@@ -6275,9 +6349,109 @@ void DocumentViewport::insertImageFromFile(const QString& filePath)
     update();
     
     #ifdef SPEEDYNOTE_DEBUG
-    qDebug() << "insertImageFromFile: Inserted image" << rawPtr->id 
+    qDebug() << "insertImageFromFile: Inserted image" << rawPtr->id
              << "size" << rawPtr->size << "at" << rawPtr->position;
     #endif
+}
+
+// ============================================================================
+// Phase C.0.5: T005 - Click-to-place image insertion
+// ============================================================================
+void DocumentViewport::insertImageAtPosition(const QPointF& position)
+{
+    // Open file dialog to select an image
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Insert Image"),
+        QString(),
+        tr("Images (*.png *.jpg *.jpeg *.bmp *.gif *.webp);;All Files (*)")
+    );
+
+    if (filePath.isEmpty()) {
+        return;  // User cancelled
+    }
+
+    // Load image from file
+    QImage image(filePath);
+    if (image.isNull()) {
+        qWarning() << "insertImageAtPosition: Failed to load image from" << filePath;
+        return;
+    }
+
+    // Create ImageObject
+    auto imgObj = std::make_unique<ImageObject>();
+    imgObj->setPixmap(QPixmap::fromImage(image));
+
+    // Scale for high DPI displays
+    qreal dpr = devicePixelRatioF();
+    if (dpr > 1.0) {
+        imgObj->size = QSizeF(imgObj->size.width() / dpr, imgObj->size.height() / dpr);
+    }
+
+    // Position at clicked location (center the image on the click point)
+    imgObj->position = position - QPointF(imgObj->size.width() / 2.0, imgObj->size.height() / 2.0);
+
+    // Layer affinity (same as insertImageFromFile)
+    int activeLayer = m_document->isEdgeless()
+        ? m_edgelessActiveLayerIndex
+        : (m_document->page(m_currentPageIndex)
+           ? m_document->page(m_currentPageIndex)->activeLayerIndex
+           : 0);
+    int defaultAffinity = activeLayer - 1;
+    imgObj->setLayerAffinity(defaultAffinity);
+
+    // Store raw pointer for later
+    InsertedObject* rawPtr = imgObj.get();
+
+    // Track tile coord for undo (edgeless mode)
+    QPoint insertedTileCoord;
+
+    // 4. Add to document
+    if (m_document->isEdgeless()) {
+        // Get tile coordinate for position
+        auto coord = m_document->tileCoordForPoint(position);
+
+        // Get or create target tile
+        auto targetTile = m_document->getOrCreateTile(coord.first, coord.second);
+        if (!targetTile) {
+            qWarning() << "insertImageAtPosition: Failed to get tile at" << coord.first << coord.second;
+            return;
+        }
+
+        targetTile->addObject(std::move(imgObj));
+        m_document->markTileDirty(coord);
+        insertedTileCoord = coord;
+    } else {
+        // Paged mode: add to current page
+        Page* targetPage = m_document->page(m_currentPageIndex);
+        if (!targetPage) {
+            qWarning() << "insertImageAtPosition: No page at index" << m_currentPageIndex;
+            return;
+        }
+
+        // Set zOrder
+        imgObj->zOrder = getNextZOrderForAffinity(targetPage, defaultAffinity);
+
+        // Adjust position to be page-local
+        QPointF pageOrigin = pagePosition(m_currentPageIndex);
+        imgObj->position = imgObj->position - pageOrigin;
+
+        targetPage->addObject(std::move(imgObj));
+        m_document->markPageDirty(m_currentPageIndex);
+    }
+
+    // Update max object extent
+    m_document->updateMaxObjectExtent(rawPtr);
+
+    // Select the newly inserted image
+    selectObject(rawPtr);
+
+    // Notify document changed
+    emit documentChanged();
+
+#ifdef SPEEDYNOTE_DEBUG
+    qDebug() << "insertImageAtPosition: Inserted image at" << position;
+#endif
 }
 
 void DocumentViewport::insertImageFromDialog()
@@ -6895,7 +7069,11 @@ void DocumentViewport::activateLinkSlot(int slotIndex)
             if (!QFile::exists(notePath)) {
                 qWarning() << "activateLinkSlot: Markdown note file not found, clearing broken reference:" << notePath;
                 link->linkSlots[slotIndex].clear();
-                
+
+                // T007: Notify user that note was missing
+                QMessageBox::warning(this, tr("Note Not Found"),
+                    tr("The linked markdown note could not be found and has been removed from the link."));
+
                 // Mark page dirty
                 Page* page = findPageContainingObject(link);
                 if (page) {
@@ -6959,10 +7137,49 @@ void DocumentViewport::addLinkToSlot(int slotIndex)
     QAction* selected = menu.exec(QCursor::pos());
     
     if (selected == posAction) {
-        // TODO: Enter "pick position" mode (requires additional UI work)
-        #ifdef SPEEDYNOTE_DEBUG
-        qDebug() << "addLinkToSlot: Position link - TODO: implement pick position mode";
-        #endif
+        // T008: Simple position link - use input dialogs (full pick mode requires more UI work)
+        bool ok;
+        QString xText = QInputDialog::getText(this, tr("Add Position Link"),
+            tr("Enter X coordinate:"), QLineEdit::Normal, "0", &ok);
+        if (!ok || xText.isEmpty()) return;
+
+        QString yText = QInputDialog::getText(this, tr("Add Position Link"),
+            tr("Enter Y coordinate:"), QLineEdit::Normal, "0", &ok);
+        if (!ok || yText.isEmpty()) return;
+
+        bool xValid, yValid;
+        qreal x = xText.toDouble(&xValid);
+        qreal y = yText.toDouble(&yValid);
+        if (!xValid || !yValid) {
+            QMessageBox::warning(this, tr("Invalid Input"), tr("Please enter valid numbers."));
+            return;
+        }
+
+        // Set position link
+        link->linkSlots[slotIndex].type = LinkSlot::Type::Position;
+        link->linkSlots[slotIndex].targetPosition = QPointF(x, y);
+        link->linkSlots[slotIndex].isEdgelessTarget = m_document->isEdgeless();
+
+        // Mark page dirty
+        Document::TileCoord tileCoord;
+        Page* page = findPageContainingObject(link, &tileCoord);
+        if (page && m_document) {
+            if (m_document->isEdgeless()) {
+                m_document->markTileDirty(tileCoord);
+            } else {
+                int pageIndex = m_document->pageIndexByUuid(page->uuid);
+                if (pageIndex >= 0) {
+                    m_document->markPageDirty(pageIndex);
+                }
+            }
+        }
+
+        emit documentModified();
+        update();
+
+#ifdef SPEEDYNOTE_DEBUG
+        qDebug() << "addLinkToSlot: Added position link at" << x << "," << y;
+#endif
     } else if (selected == urlAction) {
         QString url = QInputDialog::getText(this, tr("Add URL"), tr("Enter URL:"));
         if (!url.isEmpty()) {

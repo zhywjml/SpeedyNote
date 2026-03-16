@@ -1,3 +1,27 @@
+// ============================================================================
+// PagePanel - Page Navigation Sidebar
+// ============================================================================
+//
+// The left sidebar panel that displays document pages as thumbnails.
+// Allows users to navigate between pages, add new pages, and reorder pages
+// via drag-and-drop.
+//
+// Features:
+// - Thumbnail view of all pages in the document
+// - Add/delete/insert pages
+// - Drag-and-drop reordering
+// - Current page highlighting
+// - Long-press drag for page moving
+//
+// Architecture:
+// - PagePanel: Main widget container
+// - PageThumbnailModel: Data model for page thumbnails
+// - PageThumbnailDelegate: Custom rendering for thumbnails
+// - PagePanelListView: Custom list view with drag support
+//
+// Part of: SpeedyNote document architecture
+// ============================================================================
+
 #include "PagePanel.h"
 #include "PagePanelListView.h"
 #include "../PageThumbnailModel.h"
