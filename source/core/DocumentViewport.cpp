@@ -2866,6 +2866,12 @@ void DocumentViewport::showEvent(QShowEvent* event)
     }
     
     QWidget::showEvent(event);
+
+    // BUG FIX: Force repaint when viewport becomes visible
+    // After returning from Launcher or switching tabs, the viewport may show as black
+    // because Qt doesn't schedule a repaint event after showEvent in some cases.
+    // Calling update() ensures paintEvent will be called to redraw the content.
+    update();
 }
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
