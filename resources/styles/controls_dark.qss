@@ -8,6 +8,11 @@
  * - QSlider
  * - QScrollBar
  * - Group box and section headers
+ *
+ * Features:
+ * - Modern rounded corners
+ * - Consistent spacing
+ * - Visual feedback on interaction
  */
 
 /* ==========================================================================
