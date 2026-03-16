@@ -6410,7 +6410,7 @@ void DocumentViewport::insertImageAtPosition(const QPointF& position)
     InsertedObject* rawPtr = imgObj.get();
 
     // Track tile coord for undo (edgeless mode)
-    QPoint insertedTileCoord;
+    Document::TileCoord insertedTileCoord = {0, 0};
 
     // 4. Add to document
     if (m_document->isEdgeless()) {
@@ -6452,8 +6452,8 @@ void DocumentViewport::insertImageAtPosition(const QPointF& position)
     // Select the newly inserted image
     selectObject(rawPtr);
 
-    // Notify document changed
-    emit documentChanged();
+    // Notify selection changed
+    emit objectSelectionChanged();
 
 #ifdef SPEEDYNOTE_DEBUG
     qDebug() << "insertImageAtPosition: Inserted image at" << position;
