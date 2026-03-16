@@ -2212,8 +2212,9 @@ void Launcher::onCreateFolderClicked()
         colorPaletteLayout->addWidget(colorBtn);
     }
 
-    // Connect color selection
-    connect(colorGroup, &QButtonGroup::buttonClicked, this, [&, darkMode](int id) {
+    // Connect color selection (use int overload)
+    connect(colorGroup, static_cast<void (QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked),
+            this, [&, darkMode](int id) {
         selectedColor = predefinedColors[id];
         // Update all buttons to show selection
         for (QAbstractButton* btn : colorGroup->buttons()) {
