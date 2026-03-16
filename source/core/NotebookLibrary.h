@@ -241,7 +241,7 @@ public:
      * @brief Get all starred folders with their metadata.
      * @return List of FolderInfo structs.
      */
-    QList<FolderInfo> starredFolders() const;
+    QList<FolderInfo> starredFolderInfos() const;
 
     /**
      * @brief Get the color of a folder.
@@ -304,6 +304,19 @@ public:
      * Used after tags are modified to refresh the cached NotebookInfo.
      */
     void refreshNotebook(const QString& bundlePath);
+
+    // === Cache Management (T009-T010) ===
+
+    /**
+     * @brief Get the total size of the thumbnail cache in bytes.
+     * @return Cache size in bytes
+     */
+    qint64 getThumbnailCacheSize() const;
+
+    /**
+     * @brief Clear all thumbnails from the cache.
+     */
+    void clearThumbnailCache();
 
     // === Persistence ===
 
@@ -373,17 +386,6 @@ private:
      * Uses LRU eviction based on file modification time.
      */
     void cleanupThumbnailCache();
-
-    /**
-     * @brief Get the total size of the thumbnail cache in bytes (T009).
-     * @return Cache size in bytes
-     */
-    qint64 getThumbnailCacheSize() const;
-
-    /**
-     * @brief Clear all thumbnails from the cache (T010).
-     */
-    void clearThumbnailCache();
 
     static NotebookLibrary* s_instance;
 };

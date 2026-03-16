@@ -442,7 +442,7 @@ void NotebookLibrary::reorderStarredFolder(const QString& name, int newIndex)
 
 // === Folder Colors (Step 5) ===
 
-QList<FolderInfo> NotebookLibrary::starredFolders() const
+QList<FolderInfo> NotebookLibrary::starredFolderInfos() const
 {
     QList<FolderInfo> result;
     for (const QString& name : m_starredFolderOrder) {
