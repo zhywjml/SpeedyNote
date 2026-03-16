@@ -151,7 +151,6 @@
 #include <QFileInfo>
 #include <QFile>
 #include <QTextStream>
-#include <QFile>
 #include <QMimeData>
 #include <QJsonDocument>  // Phase doc-1: JSON serialization
 #include <QThread>
