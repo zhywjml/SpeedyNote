@@ -3,6 +3,7 @@
 #include "NotebookCardDelegate.h"
 
 #include <QDrag>
+#include <QPainter>
 #include <QMimeData>
 
 TimelineListView::TimelineListView(QWidget* parent)

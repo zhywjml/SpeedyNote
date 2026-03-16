@@ -2,6 +2,7 @@
 #include "../ThemeColors.h"
 
 #include <QPainter>
+#include <QPainterPath>
 
 FolderHeaderDelegate::FolderHeaderDelegate(QObject* parent)
     : QStyledItemDelegate(parent)

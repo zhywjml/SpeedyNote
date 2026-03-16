@@ -1056,7 +1056,7 @@ void Launcher::showNotebookContextMenu(const QString& bundlePath, const QPoint& 
     QAction* tagsAction = menu.addAction(tr("Manage Tags..."));
     connect(tagsAction, &QAction::triggered, this, [this, bundlePath]() {
         // Get current tags from notebook
-        const NotebookLibrary* lib = NotebookLibrary::instance();
+        NotebookLibrary* lib = NotebookLibrary::instance();
         const NotebookInfo* nb = lib->findNotebook(bundlePath);
         QStringList currentTags = nb ? nb->tags : QStringList();
 

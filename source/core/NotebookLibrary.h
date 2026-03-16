@@ -305,6 +305,13 @@ public:
      */
     void refreshNotebook(const QString& bundlePath);
 
+    /**
+     * @brief Find a notebook by path.
+     * @return Pointer to the NotebookInfo, or nullptr if not found.
+     */
+    NotebookInfo* findNotebook(const QString& bundlePath);
+    const NotebookInfo* findNotebook(const QString& bundlePath) const;
+
     // === Cache Management (T009-T010) ===
 
     /**
@@ -347,14 +354,7 @@ private:
      * @brief Private constructor for singleton.
      */
     explicit NotebookLibrary(QObject* parent = nullptr);
-    
-    /**
-     * @brief Find a notebook by path.
-     * @return Pointer to the NotebookInfo, or nullptr if not found.
-     */
-    NotebookInfo* findNotebook(const QString& bundlePath);
-    const NotebookInfo* findNotebook(const QString& bundlePath) const;
-    
+
     /**
      * @brief Schedule a debounced save operation.
      * 
