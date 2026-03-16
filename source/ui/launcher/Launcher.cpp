@@ -2213,7 +2213,7 @@ void Launcher::onCreateFolderClicked()
     }
 
     // Connect color selection (use int overload)
-    connect(colorGroup, static_cast<void (QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked),
+    connect(colorGroup, QOverload<int>::of(&QButtonGroup::buttonClicked),
             this, [&, darkMode](int id) {
         selectedColor = predefinedColors[id];
         // Update all buttons to show selection
