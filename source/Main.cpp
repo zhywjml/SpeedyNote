@@ -744,6 +744,9 @@ int main(int argc, char* argv[])
 
     // Enable hardware acceleration
     QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#ifdef Q_OS_ANDROID
+    QApplication::setAttribute(Qt::AA_UseOpenGLES);
+#endif
 
     QApplication app(argc, argv);
     app.setOrganizationName("SpeedyNote");
