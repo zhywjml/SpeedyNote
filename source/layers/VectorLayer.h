@@ -693,7 +693,7 @@ private:
         return result;
     }
     
-    static constexpr int MAX_STROKE_CACHE_DIM = 4096;
+    static constexpr int MAX_STROKE_CACHE_DIM = 8192;
 
     // Stroke cache for performance (Task 1.3.7 + Zoom-Aware + Incremental)
     mutable QPixmap m_strokeCache;          ///< Cached rendered strokes at current zoom
