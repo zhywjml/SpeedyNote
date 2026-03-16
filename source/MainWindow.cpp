@@ -4229,19 +4229,33 @@ void MainWindow::saveThemeSettings() {
 
 void MainWindow::loadControlStyles(bool darkMode) {
     // Load modern control styles (SpinBox, ComboBox, Slider, ScrollBar, etc.)
-    QString path = darkMode
+    QString controlsPath = darkMode
         ? ":/resources/styles/controls_dark.qss"
         : ":/resources/styles/controls.qss";
 
-    QFile file(path);
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QTextStream stream(&file);
-        QString stylesheet = stream.readAll();
-        file.close();
-
-        // Apply to the entire application for global control styling
-        qApp->setStyleSheet(stylesheet);
+    QString controlsStylesheet;
+    QFile controlsFile(controlsPath);
+    if (controlsFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream stream(&controlsFile);
+        controlsStylesheet = stream.readAll();
+        controlsFile.close();
     }
+
+    // Load dialog styles
+    QString dialogsPath = darkMode
+        ? ":/resources/styles/dialogs_dark.qss"
+        : ":/resources/styles/dialogs.qss";
+
+    QString dialogsStylesheet;
+    QFile dialogsFile(dialogsPath);
+    if (dialogsFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream stream(&dialogsFile);
+        dialogsStylesheet = stream.readAll();
+        dialogsFile.close();
+    }
+
+    // Combine and apply to the entire application
+    qApp->setStyleSheet(controlsStylesheet + "\n" + dialogsStylesheet);
 }
 
 void MainWindow::loadThemeSettings() {

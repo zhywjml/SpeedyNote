@@ -1,0 +1,146 @@
+/*
+ * SpeedyNote Dialog Styles - Light Mode
+ *
+ * Unified styles for QDialog and its common children
+ */
+
+/* ==========================================================================
+   Dialog Base Styles
+   ========================================================================== */
+
+QDialog {
+    background-color: #f5f5f5;
+    color: #333333;
+}
+
+/* ==========================================================================
+   Dialog Buttons (QDialogButtonBox)
+   ========================================================================== */
+
+QDialogButtonBox {
+    button-layout: 0;  // Mac layout: Cancel | OK
+}
+
+QDialogButtonBox QPushButton {
+    min-width: 80px;
+    min-height: 28px;
+    padding: 6px 16px;
+    margin-top: 8px;
+}
+
+/* ==========================================================================
+   Dialog Title Bar (platform-specific, limited support)
+   ========================================================================== */
+
+QDialog QLabel[heading="true"] {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333333;
+    padding-bottom: 8px;
+}
+
+/* ==========================================================================
+   Message Box Styles
+   ========================================================================== */
+
+QMessageBox {
+    background-color: #f5f5f5;
+}
+
+QMessageBox QLabel {
+    color: #333333;
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   Input Dialog Styles
+   ========================================================================== */
+
+QInputDialog {
+    background-color: #f5f5f5;
+}
+
+QInputDialog QLabel {
+    color: #333333;
+    font-size: 13px;
+}
+
+QInputDialog QLineEdit {
+    min-width: 300px;
+}
+
+/* ==========================================================================
+   Color Picker Dialog
+   ========================================================================== */
+
+QColorDialog {
+    background-color: #f5f5f5;
+}
+
+QColorDialog QLabel {
+    color: #333333;
+}
+
+/* ==========================================================================
+   File Dialog Styles
+   ========================================================================== */
+
+QFileDialog {
+    background-color: #f5f5f5;
+}
+
+QFileDialog QLabel {
+    color: #333333;
+}
+
+QFileDialog QListView,
+QFileDialog QTreeView {
+    background-color: white;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+}
+
+QFileDialog QListView::item,
+QFileDialog QTreeView::item {
+    padding: 4px;
+    border-radius: 4px;
+}
+
+QFileDialog QListView::item:selected,
+QFileDialog QTreeView::item:selected {
+    background-color: #0078d4;
+    color: white;
+}
+
+/* ==========================================================================
+   Font Dialog
+   ========================================================================== */
+
+QFontDialog {
+    background-color: #f5f5f5;
+}
+
+QFontDialog QLabel {
+    color: #333333;
+}
+
+QFontDialog QListView {
+    background-color: white;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+}
+
+/* ==========================================================================
+   Dialog Section Headers
+   ========================================================================== */
+
+QDialog QGroupBox {
+    margin-top: 16px;
+    padding-top: 16px;
+}
+
+QDialog QGroupBox::title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333333;
+}
