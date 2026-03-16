@@ -150,6 +150,8 @@
 #include <QLocalSocket>  // For single-instance server communication
 #include <QFileInfo>
 #include <QFile>
+#include <QTextStream>
+#include <QFile>
 #include <QMimeData>
 #include <QJsonDocument>  // Phase doc-1: JSON serialization
 #include <QThread>
@@ -4213,6 +4215,9 @@ void MainWindow::updateTheme() {
     if (m_actionBarContainer) {
         m_actionBarContainer->setDarkMode(darkMode);
     }
+
+    // Phase C: Load modern control styles (SpinBox, ComboBox, Slider, ScrollBar, etc.)
+    loadControlStyles(darkMode);
 }
     
 void MainWindow::saveThemeSettings() {
@@ -4220,6 +4225,23 @@ void MainWindow::saveThemeSettings() {
     settings.setValue("useCustomAccentColor", useCustomAccentColor);
     if (customAccentColor.isValid()) {
         settings.setValue("customAccentColor", customAccentColor.name());
+    }
+}
+
+void MainWindow::loadControlStyles(bool darkMode) {
+    // Load modern control styles (SpinBox, ComboBox, Slider, ScrollBar, etc.)
+    QString path = darkMode
+        ? ":/resources/styles/controls_dark.qss"
+        : ":/resources/styles/controls.qss";
+
+    QFile file(path);
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream stream(&file);
+        QString stylesheet = stream.readAll();
+        file.close();
+
+        // Apply to the entire application for global control styling
+        qApp->setStyleSheet(stylesheet);
     }
 }
 

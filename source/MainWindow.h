@@ -199,6 +199,7 @@ public:
     
     void saveThemeSettings();
     void loadThemeSettings();
+    void loadControlStyles(bool darkMode);  // Load modern control styles
     void updateTheme(); // Apply current theme settings
     // REMOVED: updateTabSizes removed - tab sizing functionality deleted
     
