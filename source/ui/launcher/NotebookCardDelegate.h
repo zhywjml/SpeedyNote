@@ -97,7 +97,8 @@ public:
         IsPdfBasedRole,                          // bool: whether notebook is PDF-based
         IsEdgelessRole,                          // bool: whether notebook is edgeless
         LastModifiedRole,                        // QDateTime: last modification time
-        
+        TagsRole,                                // QStringList: tags for organization
+
         // Batch select mode roles (Qt::UserRole + 200 range)
         IsInSelectModeRole = Qt::UserRole + 200, // bool: whether view is in select mode
         IsSelectedInBatchRole,                    // bool: whether this item is selected in batch

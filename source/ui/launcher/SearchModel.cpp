@@ -1,8 +1,12 @@
 #include "SearchModel.h"
+#include "../../core/NotebookLibrary.h"
 
 SearchModel::SearchModel(QObject* parent)
     : QAbstractListModel(parent)
 {
+    // Connect to library changes to refresh tag display
+    connect(NotebookLibrary::instance(), &NotebookLibrary::libraryChanged,
+            this, [this]() { beginResetModel(); endResetModel(); });
 }
 
 int SearchModel::rowCount(const QModelIndex& parent) const
@@ -89,7 +93,10 @@ QVariant SearchModel::data(const QModelIndex& index, int role) const
                     
                 case LastModifiedRole:
                     return item.notebook.lastModified;
-                    
+
+                case TagsRole:
+                    return item.notebook.tags;
+
                 case FolderNameRole:
                 case SectionTitleRole:
                     return QVariant();

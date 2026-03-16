@@ -177,7 +177,48 @@ void NotebookCardDelegate::paintNotebookCard(QPainter* painter, const QRect& rec
     int typeTextWidth = textWidth - MENU_BUTTON_SIZE - MENU_BUTTON_MARGIN;
     QRect typeRect(cardRect.left() + PADDING, typeY, typeTextWidth, 14);
     painter->drawText(typeRect, Qt::AlignLeft | Qt::AlignTop, typeIndicatorText(isPdf, isEdgeless));
-    
+
+    // === Tags display (Step 1: Tag feature) ===
+    int tagsY = typeY + 14;
+    QStringList tags = index.data(TagsRole).toStringList();
+    if (!tags.isEmpty()) {
+        // Draw up to 3 tag dots
+        const int maxVisibleTags = 3;
+        int tagDotSize = 6;
+        int tagDotSpacing = 4;
+        int startX = cardRect.left() + PADDING;
+
+        // Predefined tag colors (cycle through these)
+        static const QColor tagColors[] = {
+            QColor("#4A90D9"),  // Blue
+            QColor("#50C878"),  // Green
+            QColor("#F4A460"),  // Orange
+            QColor("#9370DB"),  // Purple
+            QColor("#FF6B6B"), // Red
+            QColor("#20B2AA"),  // Teal
+        };
+        int colorCount = sizeof(tagColors) / sizeof(tagColors[0]);
+
+        for (int i = 0; i < qMin(tags.size(), maxVisibleTags); ++i) {
+            int x = startX + i * (tagDotSize + tagDotSpacing);
+            QRect tagDotRect(x, tagsY, tagDotSize, tagDotSize);
+            QPainterPath tagPath;
+            tagPath.addEllipse(tagDotRect);
+            painter->fillPath(tagPath, tagColors[i % colorCount]);
+        }
+
+        // Show "+N" if there are more tags
+        if (tags.size() > maxVisibleTags) {
+            QFont moreFont = painter->font();
+            moreFont.setPointSize(7);
+            painter->setFont(moreFont);
+            painter->setPen(ThemeColors::textSecondary(m_darkMode));
+            int moreX = startX + maxVisibleTags * (tagDotSize + tagDotSpacing);
+            QRect moreRect(moreX, tagsY, 20, tagDotSize);
+            painter->drawText(moreRect, Qt::AlignLeft | Qt::AlignVCenter, QString("+%1").arg(tags.size() - maxVisibleTags));
+        }
+    }
+
     // === 3-dot menu button OR selection indicator ===
     if (inSelectMode) {
         // In select mode: draw selection indicator (top-left), hide menu button

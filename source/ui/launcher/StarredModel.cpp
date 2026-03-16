@@ -86,7 +86,14 @@ QVariant StarredModel::data(const QModelIndex& index, int role) const
                 return item.notebook.lastModified;
             }
             return QDateTime();
-            
+
+        // Tags (Step 1: Tag feature)
+        case TagsRole:
+            if (item.type == NotebookCardItem) {
+                return item.notebook.tags;
+            }
+            return QStringList();
+
         // === Batch select mode roles (L-007) ===
         case IsInSelectModeRole:
             return m_selectMode;
@@ -109,7 +116,13 @@ QVariant StarredModel::data(const QModelIndex& index, int role) const
                 return m_collapsedFolders.value(item.folderName, false);
             }
             return false;
-            
+
+        case FolderColorRole:
+            if (item.type == FolderHeaderItem) {
+                return NotebookLibrary::instance()->folderColor(item.folderName);
+            }
+            return QColor();
+
         default:
             return QVariant();
     }

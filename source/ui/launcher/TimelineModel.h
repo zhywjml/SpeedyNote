@@ -45,7 +45,8 @@ public:
         IsPdfBasedRole,
         IsEdgelessRole,
         LastModifiedRole,  // QDateTime: last modification time (for card display)
-        
+        TagsRole,          // QStringList: tags for organization (Step 1: Tag feature)
+
         // Batch select mode roles (Qt::UserRole + 200 range, L-007)
         IsInSelectModeRole = Qt::UserRole + 200,
         IsSelectedInBatchRole,

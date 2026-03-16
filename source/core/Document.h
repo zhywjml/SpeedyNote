@@ -135,6 +135,7 @@ public:
     QString author;                     ///< Optional author field
     QDateTime created;                  ///< Creation timestamp
     QDateTime lastModified;             ///< Last modification timestamp
+    QStringList tags;                   ///< Tags for organization (Step 1: Tag feature)
     // NOTE: formatVersion removed - use BUNDLE_FORMAT_VERSION constant instead
     
     // ===== Document Mode =====

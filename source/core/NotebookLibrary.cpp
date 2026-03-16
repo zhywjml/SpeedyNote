@@ -138,7 +138,12 @@ void NotebookLibrary::addToRecent(const QString& bundlePath)
         QFileInfo pdfInfo(pdfPath);
         nb.pdfFileName = pdfInfo.fileName();
     }
-    
+
+    // Load tags (Step 1: Tag feature)
+    if (obj.contains("tags")) {
+        nb.tags = obj["tags"].toVariant().toStringList();
+    }
+
     // Add to list
     m_notebooks.append(nb);
     markDirty();
@@ -435,6 +440,40 @@ void NotebookLibrary::reorderStarredFolder(const QString& name, int newIndex)
     markDirty();
 }
 
+// === Folder Colors (Step 5) ===
+
+QList<FolderInfo> NotebookLibrary::starredFolders() const
+{
+    QList<FolderInfo> result;
+    for (const QString& name : m_starredFolderOrder) {
+        FolderInfo info;
+        info.name = name;
+        info.color = m_folderColors.value(name, QColor());
+        result.append(info);
+    }
+    return result;
+}
+
+QColor NotebookLibrary::folderColor(const QString& name) const
+{
+    return m_folderColors.value(name, QColor());
+}
+
+void NotebookLibrary::setFolderColor(const QString& name, const QColor& color)
+{
+    if (!m_starredFolderOrder.contains(name)) {
+        qWarning() << "NotebookLibrary: Cannot set color for non-existent folder" << name;
+        return;
+    }
+
+    if (color.isValid()) {
+        m_folderColors[name] = color;
+    } else {
+        m_folderColors.remove(name);
+    }
+    markDirty();
+}
+
 // === Search ===
 
 QList<NotebookInfo> NotebookLibrary::search(const QString& query) const
@@ -569,13 +608,58 @@ void NotebookLibrary::invalidateThumbnail(const QString& bundlePath)
     if (!nb || nb->documentId.isEmpty()) {
         return;
     }
-    
+
     QString cachePath = m_thumbnailCachePath + "/" + nb->documentId + ".png";
-    
+
     if (QFile::exists(cachePath)) {
         QFile::remove(cachePath);
         emit thumbnailUpdated(bundlePath);
     }
+}
+
+void NotebookLibrary::refreshNotebook(const QString& bundlePath)
+{
+    // Find and update the notebook info
+    NotebookInfo* nb = findNotebook(bundlePath);
+    if (!nb) {
+        return;
+    }
+
+    // Re-read the document.json to get updated tags
+    QString docJsonPath = bundlePath + "/document.json";
+    QFile file(docJsonPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return;
+    }
+
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &parseError);
+    file.close();
+
+    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+        return;
+    }
+
+    QJsonObject obj = doc.object();
+
+    // Update tags from document.json
+    if (obj.contains("tags")) {
+        nb->tags = obj["tags"].toVariant().toStringList();
+    } else {
+        nb->tags.clear();
+    }
+
+    // Also update name if it changed
+    QString name = obj["name"].toString();
+    if (!name.isEmpty()) {
+        nb->name = name;
+    }
+
+    // Update lastModified
+    QFileInfo docJsonInfo(bundlePath + "/document.json");
+    nb->lastModified = docJsonInfo.lastModified();
+
+    emit libraryChanged();
 }
 
 void NotebookLibrary::cleanupThumbnailCache()
@@ -689,7 +773,14 @@ void NotebookLibrary::save()
         foldersArray.append(folder);
     }
     root["starredFolders"] = foldersArray;
-    
+
+    // Serialize folder colors (Step 5)
+    QJsonObject folderColorsObj;
+    for (auto it = m_folderColors.constBegin(); it != m_folderColors.constEnd(); ++it) {
+        folderColorsObj[it.key()] = it.value().name();
+    }
+    root["folderColors"] = folderColorsObj;
+
     // Serialize recent folders (L-008)
     QJsonArray recentFoldersArray;
     for (const auto& folder : m_recentFolders) {
@@ -748,7 +839,16 @@ void NotebookLibrary::load()
     for (const auto& folderVal : foldersArray) {
         m_starredFolderOrder.append(folderVal.toString());
     }
-    
+
+    // Load folder colors (Step 5)
+    QJsonObject folderColorsObj = root["folderColors"].toObject();
+    for (auto it = folderColorsObj.constBegin(); it != folderColorsObj.constEnd(); ++it) {
+        QString colorName = it.value().toString();
+        if (!colorName.isEmpty()) {
+            m_folderColors[it.key()] = QColor(colorName);
+        }
+    }
+
     // Load recent folders (L-008)
     QJsonArray recentFoldersArray = root["recentFolders"].toArray();
     for (const auto& folderVal : recentFoldersArray) {

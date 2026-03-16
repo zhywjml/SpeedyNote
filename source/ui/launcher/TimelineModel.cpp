@@ -94,7 +94,13 @@ QVariant TimelineModel::data(const QModelIndex& index, int role) const
                 return item.notebook.lastModified;
             }
             return QVariant();
-            
+
+        case TagsRole:
+            if (!item.isHeader) {
+                return item.notebook.tags;
+            }
+            return QStringList();
+
         case LastAccessedRole:
             if (!item.isHeader) {
                 return item.notebook.lastAccessed;

@@ -49,6 +49,7 @@ public:
     enum DataRoles {
         FolderNameRole = Qt::UserRole + 250,  // QString: folder display name
         IsCollapsedRole,                       // bool: whether folder is collapsed
+        FolderColorRole,                       // QColor: folder color (Step 5: Folder colors)
     };
 
 private:

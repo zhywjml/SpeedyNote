@@ -69,16 +69,32 @@ void FolderHeaderDelegate::paintFolderHeader(QPainter* painter, const QRect& rec
     if (folderName.isEmpty()) {
         folderName = index.data(Qt::DisplayRole).toString();
     }
-    
+
+    // === Folder color indicator (Step 5) ===
+    QColor folderColor = index.data(FolderColorRole).value<QColor>();
+    int textStartX = NAME_X;
+    if (folderColor.isValid()) {
+        // Draw colored dot
+        static const int COLOR_DOT_SIZE = 8;
+        static const int COLOR_DOT_MARGIN = 6;
+        int dotY = rect.top() + (rect.height() - COLOR_DOT_SIZE) / 2;
+        int dotX = NAME_X + COLOR_DOT_MARGIN;
+        QRect colorDotRect(dotX, dotY, COLOR_DOT_SIZE, COLOR_DOT_SIZE);
+        QPainterPath colorPath;
+        colorPath.addEllipse(colorDotRect);
+        painter->fillPath(colorPath, folderColor);
+        textStartX = dotX + COLOR_DOT_SIZE + COLOR_DOT_MARGIN;
+    }
+
     painter->setPen(ThemeColors::folderText(m_darkMode));
-    
+
     QFont nameFont = painter->font();
     nameFont.setPointSize(14);
     nameFont.setBold(true);
     painter->setFont(nameFont);
-    
-    QRect nameRect(rect.left() + NAME_X, rect.top(), 
-                   rect.width() - NAME_X - NAME_MARGIN_RIGHT, rect.height());
+
+    QRect nameRect(rect.left() + textStartX, rect.top(),
+                   rect.width() - textStartX - NAME_MARGIN_RIGHT, rect.height());
     painter->drawText(nameRect, Qt::AlignVCenter | Qt::AlignLeft, folderName);
     
     // === Bottom separator line ===

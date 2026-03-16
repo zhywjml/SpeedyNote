@@ -704,6 +704,7 @@ set(UI_SOURCES
     source/ui/launcher/SearchView.cpp
     source/ui/launcher/FloatingActionButton.cpp
     source/ui/launcher/FolderPickerDialog.cpp
+    source/ui/launcher/TagManagerDialog.cpp
 )
 
 # PDF abstraction layer

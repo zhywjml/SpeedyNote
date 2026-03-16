@@ -29,6 +29,7 @@ struct NotebookInfo {
     bool isPdfBased = false;  ///< True if this is a PDF annotation notebook
     bool isEdgeless = false;  ///< True if this is an edgeless (infinite canvas) notebook
     QString pdfFileName;      ///< Original PDF filename (for search), if PDF-based
+    QStringList tags;         ///< Tags for organization (Step 1: Tag feature)
     
     /**
      * @brief Check if this notebook info is valid.
@@ -60,6 +61,20 @@ struct NotebookInfo {
 
 // Register NotebookInfo with Qt's meta type system for QVariant support
 Q_DECLARE_METATYPE(NotebookInfo)
+
+/**
+ * @brief Folder metadata including color.
+ *
+ * Step 5: Folder colors feature.
+ */
+struct FolderInfo {
+    QString name;           ///< Folder name
+    QColor color;           ///< Folder color (default: no color)
+    bool operator==(const FolderInfo& other) const { return name == other.name; }
+};
+
+// Register FolderInfo with Qt's meta type system
+Q_DECLARE_METATYPE(FolderInfo)
 
 /**
  * @brief Central manager for notebook metadata, recent/starred lists, and thumbnails.
@@ -219,7 +234,29 @@ public:
      * @param newIndex New position in the folder list.
      */
     void reorderStarredFolder(const QString& name, int newIndex);
-    
+
+    // === Folder Colors (Step 5) ===
+
+    /**
+     * @brief Get all starred folders with their metadata.
+     * @return List of FolderInfo structs.
+     */
+    QList<FolderInfo> starredFolders() const;
+
+    /**
+     * @brief Get the color of a folder.
+     * @param name Folder name.
+     * @return Folder color, or invalid color if not set.
+     */
+    QColor folderColor(const QString& name) const;
+
+    /**
+     * @brief Set the color of a folder.
+     * @param name Folder name.
+     * @param color Color to set (invalid color removes the color).
+     */
+    void setFolderColor(const QString& name, const QColor& color);
+
     // === Search ===
     
     /**
@@ -259,9 +296,17 @@ public:
      * @param bundlePath Full path to the .snb bundle.
      */
     void invalidateThumbnail(const QString& bundlePath);
-    
+
+    /**
+     * @brief Reload a specific notebook's info from disk.
+     * @param bundlePath Path to the notebook bundle.
+     *
+     * Used after tags are modified to refresh the cached NotebookInfo.
+     */
+    void refreshNotebook(const QString& bundlePath);
+
     // === Persistence ===
-    
+
     /**
      * @brief Save the library to disk.
      */
@@ -313,6 +358,7 @@ private:
     QString m_thumbnailCachePath;     ///< Path to the thumbnail cache directory
     QList<NotebookInfo> m_notebooks;  ///< All tracked notebooks
     QStringList m_starredFolderOrder; ///< Ordered list of starred folder names
+    QMap<QString, QColor> m_folderColors; ///< Folder colors (Step 5)
     QStringList m_recentFolders;      ///< Recently used folders (L-008), max 5
     QTimer m_saveTimer;               ///< Timer for debounced auto-save
     

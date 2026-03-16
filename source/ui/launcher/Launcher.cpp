@@ -9,6 +9,7 @@
 #include "SearchView.h"
 #include "FloatingActionButton.h"
 #include "FolderPickerDialog.h"
+#include "TagManagerDialog.h"
 #include "../ThemeColors.h"
 #include "../dialogs/BatchPdfExportDialog.h"
 #include "../dialogs/BatchSnbxExportDialog.h"
@@ -39,6 +40,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QColorDialog>
 #include <QDir>
 #include <QDirIterator>
 #include <QFileInfo>
@@ -1026,7 +1028,23 @@ void Launcher::showNotebookContextMenu(const QString& bundlePath, const QPoint& 
     connect(duplicateAction, &QAction::triggered, this, [this, bundlePath]() {
         duplicateNotebook(bundlePath);
     });
-    
+
+    // Manage Tags (Step 1: Tag feature)
+    QAction* tagsAction = menu.addAction(tr("Manage Tags..."));
+    connect(tagsAction, &QAction::triggered, this, [this, bundlePath]() {
+        // Get current tags from notebook
+        const NotebookLibrary* lib = NotebookLibrary::instance();
+        const NotebookInfo* nb = lib->findNotebook(bundlePath);
+        QStringList currentTags = nb ? nb->tags : QStringList();
+
+        QStringList newTags = TagManagerDialog::getTags(bundlePath, this, currentTags);
+        if (newTags != currentTags) {
+            // Tags changed - they were saved in the dialog
+            // Refresh the view to show updated tags
+            lib->refreshNotebook(bundlePath);
+        }
+    });
+
     menu.addSeparator();
     
     // Export submenu (Phase 3: Batch Operations)
@@ -1068,7 +1086,28 @@ void Launcher::showFolderContextMenu(const QString& folderName, const QPoint& gl
 {
     QMenu menu(this);
     ThemeColors::styleMenu(&menu, isDarkMode());
-    
+
+    // Set Color action (Step 5: Folder colors)
+    QAction* colorAction = menu.addAction(tr("Set Color..."));
+    connect(colorAction, &QAction::triggered, this, [this, folderName]() {
+        NotebookLibrary* lib = NotebookLibrary::instance();
+        QColor currentColor = lib->folderColor(folderName);
+
+        // Show color picker dialog
+        QColorDialog colorDialog(this);
+        colorDialog.setWindowTitle(tr("Choose Folder Color"));
+        colorDialog.setCurrentColor(currentColor.isValid() ? currentColor : QColor("#4A90D9"));
+
+        if (colorDialog.exec() == QDialog::Accepted) {
+            QColor selectedColor = colorDialog.selectedColor();
+            if (selectedColor.isValid()) {
+                lib->setFolderColor(folderName, selectedColor);
+            } else {
+                lib->setFolderColor(folderName, QColor());  // Clear color
+            }
+        }
+    });
+
     // Rename action
     QAction* renameAction = menu.addAction(tr("Rename"));
     connect(renameAction, &QAction::triggered, this, [this, folderName]() {

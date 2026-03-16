@@ -1307,7 +1307,12 @@ QJsonObject Document::toJson() const
     obj["author"] = author;
     obj["created"] = created.toString(Qt::ISODate);
     obj["last_modified"] = lastModified.toString(Qt::ISODate);
-    
+
+    // Tags (Step 1: Tag feature)
+    if (!tags.isEmpty()) {
+        obj["tags"] = QJsonArray::fromStringList(tags);
+    }
+
     // Mode
     obj["mode"] = modeToString(mode);
     
@@ -1362,7 +1367,12 @@ std::unique_ptr<Document> Document::fromJson(const QJsonObject& obj)
     if (!modifiedStr.isEmpty()) {
         doc->lastModified = QDateTime::fromString(modifiedStr, Qt::ISODate);
     }
-    
+
+    // Tags (Step 1: Tag feature)
+    if (obj.contains("tags")) {
+        doc->tags = obj["tags"].toVariant().toStringList();
+    }
+
     // Mode
     doc->mode = stringToMode(obj["mode"].toString("paged"));
     

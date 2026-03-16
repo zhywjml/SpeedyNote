@@ -64,6 +64,7 @@ public:
         IsPdfBasedRole,
         IsEdgelessRole,
         LastModifiedRole,  // QDateTime: last modification time
+        TagsRole,          // QStringList: tags for organization (Step 1: Tag feature)
         
         // Batch select mode roles (Qt::UserRole + 200 range, L-007)
         IsInSelectModeRole = Qt::UserRole + 200,
@@ -72,6 +73,7 @@ public:
         // FolderHeaderDelegate roles (Qt::UserRole + 250 range)
         FolderNameRole = Qt::UserRole + 250,
         IsCollapsedRole,
+        FolderColorRole,  // QColor: folder color (Step 5: Folder colors)
     };
 
     explicit StarredModel(QObject* parent = nullptr);

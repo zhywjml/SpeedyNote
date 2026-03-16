@@ -49,7 +49,8 @@ public:
         IsPdfBasedRole,                          // bool: whether notebook is PDF-based (notebooks only)
         IsEdgelessRole,                          // bool: whether notebook is edgeless (notebooks only)
         LastModifiedRole,                        // QDateTime: last modification time (notebooks only)
-        
+        TagsRole,                                // QStringList: tags for organization (Step 1: Tag feature)
+
         // L-009: New roles for mixed results
         ItemTypeRole = Qt::UserRole + 150,       // ItemType: section/folder/notebook
         FolderNameRole,                          // QString: folder name (folders only)
