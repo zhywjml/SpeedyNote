@@ -96,6 +96,7 @@ void Toolbar::setupUi()
 
     // --- Straight Line Toggle ---
     m_straightLineButton = new ToggleButton(this);
+    m_straightLineButton->setObjectName("StraightLineButton");
     m_straightLineButton->setThemedIcon("straightLine");
     m_straightLineButton->setToolTip(tr("Straight Line Mode (/)"));
     mainLayout->addWidget(m_straightLineButton);
@@ -142,6 +143,7 @@ void Toolbar::setupUi()
 
     // --- Touch gesture mode ---
     m_touchGestureButton = new ThreeStateButton(this);
+    m_touchGestureButton->setObjectName("TouchGestureButton");
     m_touchGestureButton->setThemedIcon("hand");
     m_touchGestureButton->setToolTip(tr("Touch Gesture Mode\n0: Off\n1: Y-axis scroll only\n2: Full gestures"));
     mainLayout->addWidget(m_touchGestureButton);

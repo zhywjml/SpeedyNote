@@ -1193,6 +1193,7 @@ void MainWindow::setupUi() {
     // Phase B: Toolbar (Toolbar Extraction)
     // =========================================================================
     m_toolbar = new Toolbar(this);
+    m_toolbar->setObjectName("Toolbar");
     mainLayout->addWidget(m_toolbar);
     
     // Connect Toolbar signals
@@ -4254,8 +4255,21 @@ void MainWindow::loadControlStyles(bool darkMode) {
         dialogsFile.close();
     }
 
+    // Load toolbar styles
+    QString toolbarPath = darkMode
+        ? ":/resources/styles/toolbar_dark.qss"
+        : ":/resources/styles/toolbar.qss";
+
+    QString toolbarStylesheet;
+    QFile toolbarFile(toolbarPath);
+    if (toolbarFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream stream(&toolbarFile);
+        toolbarStylesheet = stream.readAll();
+        toolbarFile.close();
+    }
+
     // Combine and apply to the entire application
-    qApp->setStyleSheet(controlsStylesheet + "\n" + dialogsStylesheet);
+    qApp->setStyleSheet(controlsStylesheet + "\n" + dialogsStylesheet + "\n" + toolbarStylesheet);
 }
 
 void MainWindow::loadThemeSettings() {

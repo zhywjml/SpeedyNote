@@ -134,6 +134,12 @@
     <file>resources/styles/markdown_sidebar_dark.qss</file>
     <file>resources/styles/launcher.qss</file>
     <file>resources/styles/launcher_dark.qss</file>
-    
+    <file>resources/styles/controls.qss</file>
+    <file>resources/styles/controls_dark.qss</file>
+    <file>resources/styles/dialogs.qss</file>
+    <file>resources/styles/dialogs_dark.qss</file>
+    <file>resources/styles/toolbar.qss</file>
+    <file>resources/styles/toolbar_dark.qss</file>
+
 </qresource>
 </RCC>

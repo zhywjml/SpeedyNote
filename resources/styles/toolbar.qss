@@ -1,0 +1,210 @@
+/*
+ * SpeedyNote Toolbar Styles - Light Mode
+ *
+ * Modern flat design for the main drawing toolbar:
+ * - Container styling
+ * - ExpandableToolButton styling
+ * - SubToolbar popup panels
+ *
+ * Features:
+ * - Flat design with subtle shadows
+ * - 8px border radius
+ * - Smooth transitions
+ */
+
+/* ==========================================================================
+   Toolbar Container
+   ========================================================================== */
+
+#Toolbar {
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* ==========================================================================
+   ExpandableToolButton (Tool Selection Buttons)
+   ========================================================================== */
+
+ExpandableToolButton {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+/* Expanded state - shows white background with subtle shadow */
+ExpandableToolButton[expanded="true"] {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ==========================================================================
+   SubToolbar Panels (Popup Content)
+   ========================================================================== */
+
+PenSubToolbar,
+MarkerSubToolbar,
+EraserSubToolbar,
+HighlighterSubToolbar,
+ObjectSelectSubToolbar {
+    background-color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 4px 8px;
+    spacing: 4px;
+}
+
+/* SubToolbar buttons */
+PenSubToolbar QPushButton,
+MarkerSubToolbar QPushButton,
+EraserSubToolbar QPushButton,
+HighlighterSubToolbar QPushButton,
+ObjectSelectSubToolbar QPushButton {
+    min-width: 28px;
+    min-height: 28px;
+    max-width: 28px;
+    max-height: 28px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 2px;
+}
+
+PenSubToolbar QPushButton:hover,
+MarkerSubToolbar QPushButton:hover,
+EraserSubToolbar QPushButton:hover,
+HighlighterSubToolbar QPushButton:hover,
+ObjectSelectSubToolbar QPushButton:hover {
+    background: rgba(0, 0, 0, 25);
+    border: 1px solid #d0d0d0;
+}
+
+PenSubToolbar QPushButton:pressed,
+MarkerSubToolbar QPushButton:pressed,
+EraserSubToolbar QPushButton:pressed,
+HighlighterSubToolbar QPushButton:pressed,
+ObjectSelectSubToolbar QPushButton:pressed {
+    background: rgba(0, 0, 0, 50);
+}
+
+/* Selected color/thickness preset */
+PenSubToolbar QPushButton[selected="true"],
+MarkerSubToolbar QPushButton[selected="true"],
+EraserSubToolbar QPushButton[selected="true"],
+HighlighterSubToolbar QPushButton[selected="true"] {
+    background: #0078d4;
+    border: 1px solid #0078d4;
+}
+
+/* ==========================================================================
+   Color Preset Buttons (in subtoolbar)
+   ========================================================================== */
+
+PenSubToolbar QPushButton[isColorPreset="true"] {
+    min-width: 24px;
+    min-height: 24px;
+    max-width: 24px;
+    max-height: 24px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+}
+
+PenSubToolbar QPushButton[isColorPreset="true"]:hover {
+    border: 2px solid #0078d4;
+}
+
+PenSubToolbar QPushButton[isColorPreset="true"][selected="true"] {
+    border: 2px solid #333333;
+}
+
+/* ==========================================================================
+   Size Slider (in subtoolbar)
+   ========================================================================== */
+
+PenSubToolbar QSlider,
+MarkerSubToolbar QSlider,
+EraserSubToolbar QSlider,
+HighlighterSubToolbar QSlider {
+    min-width: 80px;
+    max-width: 120px;
+}
+
+/* ==========================================================================
+   Dividers
+   ========================================================================== */
+
+PenSubToolbar QFrame[frameShape="4"],
+MarkerSubToolbar QFrame[frameShape="4"],
+EraserSubToolbar QFrame[frameShape="4"],
+HighlighterSubToolbar QFrame[frameShape="4"],
+ObjectSelectSubToolbar QFrame[frameShape="4"] {
+    background-color: #e0e0e0;
+    max-width: 1px;
+    min-width: 1px;
+}
+
+/* ==========================================================================
+   Labels
+   ========================================================================== */
+
+PenSubToolbar QLabel,
+MarkerSubToolbar QLabel,
+EraserSubToolbar QLabel,
+HighlighterSubToolbar QLabel,
+ObjectSelectSubToolbar QLabel {
+    color: #333333;
+    font-size: 12px;
+    padding: 0 4px;
+}
+
+/* ==========================================================================
+   Straight Line Toggle (special icon)
+   ========================================================================== */
+
+#StraightLineButton {
+    min-width: 36px;
+    min-height: 36px;
+    max-width: 36px;
+    max-height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+}
+
+#StraightLineButton:hover {
+    background: rgba(0, 0, 0, 25);
+}
+
+#StraightLineButton:checked {
+    background: white;
+    border: 1px solid #0078d4;
+}
+
+/* ==========================================================================
+   Touch Gesture Button
+   ========================================================================== */
+
+#TouchGestureButton {
+    min-width: 36px;
+    min-height: 36px;
+    max-width: 36px;
+    max-height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+}
+
+#TouchGestureButton:hover {
+    background: rgba(0, 0, 0, 25);
+}
+
+#TouchGestureButton[state="1"] {
+    background: rgba(255, 100, 100, 80);
+    border-radius: 8px;
+}
+
+#TouchGestureButton[state="2"] {
+    background: white;
+    border: 1px solid #0078d4;
+}
