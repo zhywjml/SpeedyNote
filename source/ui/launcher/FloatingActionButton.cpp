@@ -27,11 +27,12 @@ FloatingActionButton::FloatingActionButton(QWidget* parent)
 void FloatingActionButton::setupUi()
 {
     // Calculate total size needed
-    // 5 buttons on desktop, 4 on Android (Open Notebook hidden)
+    // 6 buttons on desktop: folder, edgeless, paged, pdf, open, import
+    // 5 on Android: folder, edgeless, paged, pdf, import (Open Notebook hidden)
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-    int numActionButtons = 4;  // Open Notebook hidden on Android
-#else
     int numActionButtons = 5;
+#else
+    int numActionButtons = 6;
 #endif
     int totalHeight = MAIN_BUTTON_SIZE + numActionButtons * (ACTION_BUTTON_SIZE + BUTTON_SPACING);
     int totalWidth = MAIN_BUTTON_SIZE;
@@ -60,23 +61,28 @@ void FloatingActionButton::setupUi()
     ).arg(MAIN_BUTTON_SIZE / 2));
     
     connect(m_mainButton, &QPushButton::clicked, this, &FloatingActionButton::toggle);
-    
+
     // Create action buttons (bottom to top order when expanded)
+    m_folderBtn = createActionButton("folder", tr("New Folder"));
     m_edgelessBtn = createActionButton("fullscreen", tr("New Edgeless Canvas"));
     m_pagedBtn = createActionButton("bookmark", tr("New Paged Notebook"));
     m_pdfBtn = createActionButton("pdf", tr("Open PDF for Annotation"));
     m_openBtn = createActionButton("folder", tr("Open Notebook (.snb)"));
     m_importBtn = createActionButton("import", tr("Import Package (.snbx)"));
-    
-    m_actionButtons << m_edgelessBtn << m_pagedBtn << m_pdfBtn << m_openBtn << m_importBtn;
-    
+
+    m_actionButtons << m_folderBtn << m_edgelessBtn << m_pagedBtn << m_pdfBtn << m_openBtn << m_importBtn;
+
     // Hide "Open Notebook" on Android - users should use Import Package instead
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     m_openBtn->setVisible(false);
     m_actionButtons.removeOne(m_openBtn);
 #endif
-    
+
     // Connect action buttons
+    connect(m_folderBtn, &QPushButton::clicked, this, [this]() {
+        setExpanded(false);
+        emit createFolder();
+    });
     connect(m_edgelessBtn, &QPushButton::clicked, this, [this]() {
         setExpanded(false);
         emit createEdgeless();
@@ -282,6 +288,7 @@ void FloatingActionButton::setDarkMode(bool dark)
         
         // Map buttons to their icon names
         QMap<QPushButton*, QString> buttonIcons;
+        buttonIcons[m_folderBtn] = "folder";
         buttonIcons[m_edgelessBtn] = "fullscreen";
         buttonIcons[m_pagedBtn] = "bookmark";
         buttonIcons[m_pdfBtn] = "pdf";

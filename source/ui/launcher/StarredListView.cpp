@@ -1,6 +1,10 @@
 #include "StarredListView.h"
 #include "StarredModel.h"
 #include "NotebookCardDelegate.h"
+#include "../../core/NotebookLibrary.h"
+
+#include <QDrag>
+#include <QMimeData>
 
 StarredListView::StarredListView(QWidget* parent)
     : KineticListView(parent)
@@ -14,21 +18,27 @@ StarredListView::StarredListView(QWidget* parent)
     setResizeMode(QListView::Adjust);
     setSpacing(12);  // Match GRID_SPACING from original StarredView
     setUniformItemSizes(false);  // Different sizes for headers vs cards
-    
+
     // Visual settings
     setSelectionMode(QAbstractItemView::SingleSelection);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setFrameShape(QFrame::NoFrame);
-    
+
     // Disable Qt's native selection highlight - delegate handles selection drawing
     // This prevents rectangular selection from showing around rounded cards
     setStyleSheet("QListView::item:selected { background: transparent; }"
                   "QListView::item:selected:active { background: transparent; }");
-    
+
     // Enable mouse tracking for hover effects
     setMouseTracking(true);
     viewport()->setMouseTracking(true);
+
+    // Enable drag-drop for moving notebooks to folders
+    setDragEnabled(true);
+    setDragDropMode(QListView::DragDrop);  // Allow both drag and drop
+    setAcceptDrops(true);
+    setDefaultDropAction(Qt::MoveAction);
 }
 
 void StarredListView::setStarredModel(StarredModel* model)
@@ -272,4 +282,87 @@ void StarredListView::handleLongPress(const QModelIndex& index, const QPoint& gl
             }
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+// Drag and Drop (Task 9: Add drag-drop support for notebooks to folders)
+// -----------------------------------------------------------------------------
+
+void StarredListView::dragEnterEvent(QDragEnterEvent* event)
+{
+    // Accept drag from TimelineListView or StarredListView itself
+    if (event->mimeData()->hasFormat("application/x-qabstractitemmodeldatalist") ||
+        event->mimeData()->hasText()) {
+        // Check if we're over a folder header
+        QModelIndex dropTarget = indexAt(event->pos());
+        if (dropTarget.isValid() && isFolderHeader(dropTarget)) {
+            event->acceptProposedAction();
+            return;
+        }
+    }
+    event->ignore();
+}
+
+void StarredListView::dragMoveEvent(QDragMoveEvent* event)
+{
+    // Highlight folder header when hovering over it
+    QModelIndex dropTarget = indexAt(event->pos());
+    if (dropTarget.isValid() && isFolderHeader(dropTarget)) {
+        event->acceptProposedAction();
+    } else {
+        event->ignore();
+    }
+}
+
+void StarredListView::dropEvent(QDropEvent* event)
+{
+    QModelIndex dropTarget = indexAt(event->pos());
+
+    // Must drop on a folder header
+    if (!dropTarget.isValid() || !isFolderHeader(dropTarget)) {
+        event->ignore();
+        return;
+    }
+
+    QString targetFolder = folderNameForIndex(dropTarget);
+    if (targetFolder.isEmpty()) {
+        event->ignore();
+        return;
+    }
+
+    // Get the bundle paths from the drop data
+    // The default Qt drag from QListView uses "application/x-qabstractitemmodeldatalist"
+    // We'll extract bundle paths from the MIME data text if available
+    QStringList bundlePaths;
+
+    // Try to get from text mime data (our custom format)
+    if (event->mimeData()->hasText()) {
+        QString text = event->mimeData()->text();
+        if (!text.isEmpty()) {
+            bundlePaths = text.split('\n', Qt::SkipEmptyParts);
+        }
+    }
+
+    // Fallback: try to get from model datalist
+    if (bundlePaths.isEmpty() && event->mimeData()->hasFormat("application/x-qabstractitemmodeldatalist")) {
+        // Extract data from the internal format
+        // For now, we'll use a simpler approach - the dragged items' bundle paths
+        // should be available through the model's selected data
+    }
+
+    if (bundlePaths.isEmpty()) {
+        event->ignore();
+        return;
+    }
+
+    // Move notebooks to the target folder
+    NotebookLibrary* lib = NotebookLibrary::instance();
+    lib->moveNotebooksToFolder(bundlePaths, targetFolder);
+
+    // Refresh the view
+    if (m_starredModel) {
+        m_starredModel->reload();
+    }
+
+    event->acceptProposedAction();
 }

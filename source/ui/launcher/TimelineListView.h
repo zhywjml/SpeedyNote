@@ -108,6 +108,7 @@ protected:
     void handleItemTap(const QModelIndex& index, const QPoint& pos) override;
     void handleRightClick(const QModelIndex& index, const QPoint& globalPos) override;
     void handleLongPress(const QModelIndex& index, const QPoint& globalPos) override;
+    void startDrag(Qt::DropActions supportedActions) override;
 
 private:
     bool isSectionHeader(const QModelIndex& index) const;

@@ -133,6 +133,10 @@ protected:
     void handleItemTap(const QModelIndex& index, const QPoint& pos) override;
     void handleRightClick(const QModelIndex& index, const QPoint& globalPos) override;
     void handleLongPress(const QModelIndex& index, const QPoint& globalPos) override;
+    void dropEvent(QDropEvent* event) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dragMoveEvent(QDragMoveEvent* event) override;
+    void startDrag(Qt::DropActions supportedActions) override;
 
 private:
     bool isFolderHeader(const QModelIndex& index) const;

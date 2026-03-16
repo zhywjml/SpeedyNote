@@ -69,6 +69,11 @@ public:
 
 signals:
     /**
+     * @brief Create new folder.
+     */
+    void createFolder();
+
+    /**
      * @brief Create new edgeless canvas.
      */
     void createEdgeless();
@@ -109,6 +114,7 @@ private:
     QPushButton* m_mainButton = nullptr;
     
     // Action buttons (in order from bottom to top when expanded)
+    QPushButton* m_folderBtn = nullptr;
     QPushButton* m_edgelessBtn = nullptr;
     QPushButton* m_pagedBtn = nullptr;
     QPushButton* m_pdfBtn = nullptr;

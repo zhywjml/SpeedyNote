@@ -84,7 +84,12 @@ signals:
      * @brief Emitted when user requests a new paged document.
      */
     void createNewPaged();
-    
+
+    /**
+     * @brief Handle create folder button click from FAB.
+     */
+    void onCreateFolderClicked();
+
     /**
      * @brief Emitted when user wants to open a PDF for annotation.
      */

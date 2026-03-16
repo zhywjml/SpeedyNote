@@ -2,6 +2,9 @@
 #include "TimelineModel.h"
 #include "NotebookCardDelegate.h"
 
+#include <QDrag>
+#include <QMimeData>
+
 TimelineListView::TimelineListView(QWidget* parent)
     : KineticListView(parent)
 {
@@ -14,21 +17,27 @@ TimelineListView::TimelineListView(QWidget* parent)
     setResizeMode(QListView::Adjust);
     setSpacing(12);  // Match GRID_SPACING
     setUniformItemSizes(false);  // Different sizes for headers vs cards
-    
+
     // Visual settings
     setSelectionMode(QAbstractItemView::SingleSelection);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setFrameShape(QFrame::NoFrame);
-    
+
     // Disable Qt's native selection highlight - delegate handles selection drawing
     // This prevents rectangular selection from showing around rounded cards
     setStyleSheet("QListView::item:selected { background: transparent; }"
                   "QListView::item:selected:active { background: transparent; }");
-    
+
     // Enable mouse tracking for hover effects
     setMouseTracking(true);
     viewport()->setMouseTracking(true);
+
+    // Enable drag support for dragging notebooks to folders
+    setDragEnabled(true);
+    setDragDropMode(QListView::DragOnly);
+    setDefaultDropAction(Qt::MoveAction);
+    setAcceptDrops(false);  // Timeline doesn't accept drops
 }
 
 void TimelineListView::setTimelineModel(TimelineModel* model)
@@ -241,7 +250,7 @@ void TimelineListView::handleLongPress(const QModelIndex& index, const QPoint& g
     if (!index.isValid() || isSectionHeader(index)) {
         return;
     }
-    
+
     QString bundlePath = bundlePathForIndex(index);
     if (!bundlePath.isEmpty()) {
         if (m_selectMode) {
@@ -252,5 +261,64 @@ void TimelineListView::handleLongPress(const QModelIndex& index, const QPoint& g
             emit longPressed(index, globalPos);
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+// Drag support (Task 9: Add drag-drop support for notebooks to folders)
+// -----------------------------------------------------------------------------
+
+void TimelineListView::startDrag(Qt::DropActions supportedActions)
+{
+    QModelIndexList indexes = selectedIndexes();
+    if (indexes.isEmpty()) {
+        return;
+    }
+
+    // Get the bundle paths for selected items (or single clicked item)
+    QStringList bundlePaths;
+    for (const QModelIndex& index : indexes) {
+        if (!isSectionHeader(index)) {
+            QString path = bundlePathForIndex(index);
+            if (!path.isEmpty()) {
+                bundlePaths.append(path);
+            }
+        }
+    }
+
+    if (bundlePaths.isEmpty()) {
+        return;
+    }
+
+    // Create drag with bundle paths as text
+    QDrag* drag = new QDrag(this);
+    QMimeData* mimeData = new QMimeData();
+
+    // Set bundle paths as text (newline-separated for multiple items)
+    mimeData->setText(bundlePaths.join('\n'));
+
+    // Also set the Qt internal format for compatibility
+    // This allows the drag to work with QListView's built-in mechanisms
+    drag->setMimeData(mimeData);
+
+    // Set the pixmap to a simple icon
+    QPixmap pixmap(48, 48);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setBrush(QColor("#1a73e8"));
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(pixmap.rect());
+    painter.setPen(Qt::white);
+    QFont font = painter.font();
+    font.setBold(true);
+    painter.setFont(font);
+    painter.drawText(pixmap.rect(), Qt::AlignCenter, QString::number(bundlePaths.size()));
+    painter.end();
+
+    drag->setPixmap(pixmap);
+    drag->setHotSpot(QPoint(24, 24));
+
+    // Execute the drag
+    drag->exec(supportedActions, Qt::MoveAction);
 }
 

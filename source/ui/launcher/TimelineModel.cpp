@@ -139,6 +139,24 @@ QVariant TimelineModel::data(const QModelIndex& index, int role) const
     return QVariant();
 }
 
+Qt::ItemFlags TimelineModel::flags(const QModelIndex& index) const
+{
+    if (!index.isValid()) {
+        return Qt::NoItemFlags;
+    }
+
+    // Get the item type - headers are not draggable
+    const DisplayItem& item = m_items.at(index.row());
+
+    if (item.isHeader) {
+        // Section headers are not interactive for drag-drop
+        return Qt::NoItemFlags;
+    }
+
+    // Notebook cards can be dragged
+    return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled;
+}
+
 QHash<int, QByteArray> TimelineModel::roleNames() const
 {
     QHash<int, QByteArray> roles = QAbstractListModel::roleNames();

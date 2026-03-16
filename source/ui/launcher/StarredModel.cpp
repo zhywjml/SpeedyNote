@@ -128,6 +128,24 @@ QVariant StarredModel::data(const QModelIndex& index, int role) const
     }
 }
 
+Qt::ItemFlags StarredModel::flags(const QModelIndex& index) const
+{
+    if (!index.isValid()) {
+        return Qt::NoItemFlags;
+    }
+
+    // Get the item type
+    ItemType itemType = static_cast<ItemType>(index.data(ItemTypeRole).toInt());
+
+    if (itemType == FolderHeaderItem) {
+        // Folder headers can accept drops
+        return Qt::ItemIsEnabled | Qt::ItemIsDropEnabled;
+    } else {
+        // Notebook cards can be dragged
+        return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled;
+    }
+}
+
 QHash<int, QByteArray> StarredModel::roleNames() const
 {
     QHash<int, QByteArray> roles = QAbstractListModel::roleNames();

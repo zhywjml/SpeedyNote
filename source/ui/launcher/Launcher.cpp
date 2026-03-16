@@ -41,6 +41,7 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QColorDialog>
+#include <QButtonGroup>
 #include <QDir>
 #include <QDirIterator>
 #include <QFileInfo>
@@ -580,6 +581,7 @@ void Launcher::setupFAB()
     m_fab->show();
     
     // Connect signals
+    connect(m_fab, &FloatingActionButton::createFolder, this, &Launcher::onCreateFolderClicked);
     connect(m_fab, &FloatingActionButton::createEdgeless, this, &Launcher::createNewEdgeless);
     connect(m_fab, &FloatingActionButton::createPaged, this, &Launcher::createNewPaged);
     connect(m_fab, &FloatingActionButton::openPdf, this, &Launcher::openPdfRequested);
@@ -2022,44 +2024,298 @@ QString Launcher::findImportedPdfPath(const QString& bundlePath)
 {
     // BUG-A003 Storage Cleanup: Check if this document has an imported PDF in sandbox.
     // Returns the path to the PDF if it's in our sandbox, empty string otherwise.
-    
+
     // Read document.json to get the PDF path
     QString manifestPath = bundlePath + "/document.json";
     QFile manifestFile(manifestPath);
     if (!manifestFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         return QString();
     }
-    
+
     QByteArray data = manifestFile.readAll();
     manifestFile.close();
-    
+
     QJsonParseError parseError;
     QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
         return QString();
     }
-    
+
     QJsonObject obj = doc.object();
     QString pdfPath = obj["pdf_path"].toString();
-    
+
     if (pdfPath.isEmpty()) {
         return QString(); // Not a PDF-backed document
     }
-    
+
     // Check if the PDF is in our sandbox directories:
     // 1. /files/pdfs/ - Direct PDF imports via SAF (BUG-A003)
     // 2. /files/notebooks/embedded/ - PDFs extracted from .snbx packages (Phase 2)
     QString appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QString sandboxPdfDir = appDataDir + "/pdfs";
     QString embeddedDir = appDataDir + "/notebooks/embedded";
-    
+
     if (pdfPath.startsWith(sandboxPdfDir) || pdfPath.startsWith(embeddedDir)) {
         // This PDF was imported to our sandbox - safe to delete
         return pdfPath;
     }
-    
+
     // PDF is external (user's original file) - don't delete it
     return QString();
 }
 #endif
+
+void Launcher::onCreateFolderClicked()
+{
+    // Create a simple dialog for folder creation with color selection
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("New Folder"));
+    dialog.setModal(true);
+
+    // Detect dark mode
+    bool darkMode = palette().color(QPalette::Window).lightness() < 128;
+
+    // Main layout
+    auto* mainLayout = new QVBoxLayout(&dialog);
+    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setSpacing(16);
+
+    // Folder name input
+    auto* nameLayout = new QHBoxLayout();
+    nameLayout->setSpacing(8);
+
+    QLabel* nameLabel = new QLabel(tr("Folder name:"), &dialog);
+    nameLabel->setStyleSheet(QString("color: %1;").arg(
+        darkMode ? "#E0E0E0" : "#333333"));
+    nameLabel->setFixedWidth(90);
+
+    QLineEdit* nameInput = new QLineEdit(&dialog);
+    nameInput->setPlaceholderText(tr("Enter folder name"));
+    nameInput->setFixedHeight(40);
+    nameInput->setStyleSheet(QString(
+        "QLineEdit {"
+        "  background-color: %1;"
+        "  color: %2;"
+        "  border: 1px solid %3;"
+        "  border-radius: 8px;"
+        "  padding: 8px 12px;"
+        "  font-size: 14px;"
+        "}"
+        "QLineEdit:focus {"
+        "  border: 2px solid %4;"
+        "}"
+    ).arg(darkMode ? "#3A3E42" : "#FFFFFF",
+          darkMode ? "#E0E0E0" : "#333333",
+          darkMode ? "#4D4D4D" : "#CCCCCC",
+          "#1a73e8"));
+
+    nameLayout->addWidget(nameLabel);
+    nameLayout->addWidget(nameInput, 1);
+    mainLayout->addLayout(nameLayout);
+
+    // Color selection
+    auto* colorLayout = new QHBoxLayout();
+    colorLayout->setSpacing(8);
+
+    QLabel* colorLabel = new QLabel(tr("Folder color:"), &dialog);
+    colorLabel->setStyleSheet(QString("color: %1;").arg(
+        darkMode ? "#E0E0E0" : "#333333"));
+    colorLabel->setFixedWidth(90);
+
+    // Predefined colors
+    static const QColor predefinedColors[] = {
+        QColor("#F44336"),  // Red
+        QColor("#E91E63"),  // Pink
+        QColor("#9C27B0"),  // Purple
+        QColor("#673AB7"),  // Deep Purple
+        QColor("#3F51B5"),  // Indigo
+        QColor("#2196F3"),  // Blue
+        QColor("#03A9F4"),  // Light Blue
+        QColor("#00BCD4"),  // Cyan
+        QColor("#009688"),  // Teal
+        QColor("#4CAF50"),  // Green
+        QColor("#8BC34A"),  // Light Green
+        QColor("#CDDC39"),  // Lime
+        QColor("#FFEB3B"),  // Yellow
+        QColor("#FFC107"),  // Amber
+        QColor("#FF9800"),  // Orange
+        QColor("#FF5722"),  // Deep Orange
+    };
+    constexpr int colorCount = sizeof(predefinedColors) / sizeof(predefinedColors[0]);
+
+    QWidget* colorPalette = new QWidget(&dialog);
+    colorPalette->setFixedHeight(36);
+    auto* colorPaletteLayout = new QHBoxLayout(colorPalette);
+    colorPaletteLayout->setSpacing(4);
+    colorPaletteLayout->setContentsMargins(0, 0, 0, 0);
+
+    QButtonGroup* colorGroup = new QButtonGroup(&dialog);
+    colorGroup->setExclusive(true);
+
+    QColor selectedColor = predefinedColors[0];  // Default to first color
+
+    for (int i = 0; i < colorCount; ++i) {
+        QPushButton* colorBtn = new QPushButton(colorPalette);
+        colorBtn->setFixedSize(28, 28);
+        colorBtn->setCursor(Qt::PointingHandCursor);
+
+        // Set button color with border
+        colorBtn->setStyleSheet(QString(
+            "QPushButton {"
+            "  background-color: %1;"
+            "  border: 2px solid %2;"
+            "  border-radius: 14px;"
+            "}"
+            "QPushButton:hover {"
+            "  border: 3px solid %3;"
+            "}"
+        ).arg(predefinedColors[i].name(),
+              darkMode ? "#4D4D4D" : "#CCCCCC",
+              darkMode ? "#FFFFFF" : "#666666"));
+
+        // First color is selected by default
+        if (i == 0) {
+            colorBtn->setStyleSheet(QString(
+                "QPushButton {"
+                "  background-color: %1;"
+                "  border: 3px solid %2;"
+                "  border-radius: 14px;"
+                "}"
+            ).arg(predefinedColors[i].name(),
+                  darkMode ? "#FFFFFF" : "#333333"));
+        }
+
+        colorBtn->setProperty("colorIndex", i);
+        colorGroup->addButton(colorBtn, i);
+
+        colorPaletteLayout->addWidget(colorBtn);
+    }
+
+    // Connect color selection
+    connect(colorGroup, &QButtonGroup::buttonClicked, this, [&, darkMode](int id) {
+        selectedColor = predefinedColors[id];
+        // Update all buttons to show selection
+        for (QAbstractButton* btn : colorGroup->buttons()) {
+            int idx = btn->property("colorIndex").toInt();
+            btn->setStyleSheet(QString(
+                "QPushButton {"
+                "  background-color: %1;"
+                "  border: 2px solid %2;"
+                "  border-radius: 14px;"
+                "}"
+                "QPushButton:hover {"
+                "  border: 3px solid %3;"
+                "}"
+            ).arg(predefinedColors[idx].name(),
+                  darkMode ? "#4D4D4D" : "#CCCCCC",
+                  darkMode ? "#FFFFFF" : "#666666"));
+        }
+        // Highlight selected
+        QAbstractButton* selectedBtn = colorGroup->button(id);
+        if (selectedBtn) {
+            selectedBtn->setStyleSheet(QString(
+                "QPushButton {"
+                "  background-color: %1;"
+                "  border: 3px solid %2;"
+                "  border-radius: 14px;"
+                "}"
+            ).arg(predefinedColors[id].name(),
+                  darkMode ? "#FFFFFF" : "#333333"));
+        }
+    });
+
+    colorLayout->addWidget(colorLabel);
+    colorLayout->addWidget(colorPalette, 1);
+    mainLayout->addLayout(colorLayout);
+
+    // Buttons
+    auto* buttonLayout = new QHBoxLayout();
+    buttonLayout->setSpacing(12);
+
+    QPushButton* cancelBtn = new QPushButton(tr("Cancel"), &dialog);
+    cancelBtn->setFixedHeight(40);
+    cancelBtn->setCursor(Qt::PointingHandCursor);
+    cancelBtn->setStyleSheet(QString(
+        "QPushButton {"
+        "  background-color: %1;"
+        "  color: %2;"
+        "  border: 1px solid %3;"
+        "  border-radius: 8px;"
+        "  font-size: 14px;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: %4;"
+        "}"
+    ).arg(darkMode ? "#3A3E42" : "#F5F5F5",
+          darkMode ? "#E0E0E0" : "#333333",
+          darkMode ? "#4D4D4D" : "#CCCCCC",
+          darkMode ? "#4A4E52" : "#E8E8E8"));
+
+    QPushButton* createBtn = new QPushButton(tr("Create"), &dialog);
+    createBtn->setFixedHeight(40);
+    createBtn->setCursor(Qt::PointingHandCursor);
+    createBtn->setDefault(true);
+    createBtn->setStyleSheet(QString(
+        "QPushButton {"
+        "  background-color: #1a73e8;"
+        "  color: white;"
+        "  border: none;"
+        "  border-radius: 8px;"
+        "  font-size: 14px;"
+        "  font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: #1557b0;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #104a9e;"
+        "}"
+    ));
+
+    buttonLayout->addWidget(cancelBtn);
+    buttonLayout->addWidget(createBtn);
+    mainLayout->addLayout(buttonLayout);
+
+    // Connect buttons
+    connect(cancelBtn, &QPushButton::clicked, &dialog, &QDialog::reject);
+    connect(createBtn, &QPushButton::clicked, &dialog, &QDialog::accept);
+
+    // Set dialog background
+    dialog.setStyleSheet(QString("QDialog { background-color: %1; }").arg(
+        darkMode ? "#2A2E32" : "#FFFFFF"));
+
+    // Show dialog and get result
+    dialog.setFixedWidth(380);
+
+    if (dialog.exec() == QDialog::Accepted) {
+        QString folderName = nameInput->text().trimmed();
+
+        if (folderName.isEmpty()) {
+            QMessageBox::warning(this, tr("Error"), tr("Please enter a folder name."));
+            return;
+        }
+
+        // Check if folder already exists
+        NotebookLibrary* lib = NotebookLibrary::instance();
+        if (lib->starredFolders().contains(folderName, Qt::CaseInsensitive)) {
+            QMessageBox::warning(this, tr("Folder Exists"),
+                tr("A folder named \"%1\" already exists.").arg(folderName));
+            return;
+        }
+
+        // Create the folder
+        lib->createStarredFolder(folderName);
+
+        // Set the folder color
+        lib->setFolderColor(folderName, selectedColor);
+
+        // Refresh views to show the new folder
+        if (m_timelineModel) {
+            m_timelineModel->reload();
+        }
+        if (m_starredView) {
+            m_starredView->reload();
+        }
+    }
+}
 
